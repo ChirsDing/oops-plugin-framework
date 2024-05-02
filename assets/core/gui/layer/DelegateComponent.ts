@@ -65,9 +65,7 @@ export class DelegateComponent extends Component {
             this.scheduleOnce(() => {
                 // 释放界面相关资源
                 oops.res.release(vp.config.prefab);
-            }
-
-            // oops.log.logView(`【界面管理】释放【${vp.config.prefab}】界面资源`);
+            });
         }
         else {
             this.node.removeFromParent();
