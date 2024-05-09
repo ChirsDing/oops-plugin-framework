@@ -56,6 +56,8 @@ declare module "cc" {
         angle_y: number;
         /** 获取、设置节点的 Z 欧拉角 */
         angle_z: number;
+        /** script bind */
+        bind: boolean;
     }
 }
 
