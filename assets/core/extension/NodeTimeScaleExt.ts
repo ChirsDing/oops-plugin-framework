@@ -7,9 +7,6 @@ import { EDITOR } from "cc/env";
 /** 扩展节点属性 */
 declare module "cc" {
     interface Node {
-        gameComponent: GameComponent,
-        animation: AnimationComponent,
-        spSkeleton: sp.Skeleton,
 
         /** 速度缩放 */
         speedScale: number;
@@ -22,49 +19,40 @@ if (!EDITOR) {
         //@ts-ignore
         Node.prototype["$__cc-node-speed-extension__"] = true;
 
-        let componentMap: any = {
-            "gameComponent": GameComponent,
-            "animation": Animation,
-            "spSkeleton": sp.Skeleton,
-        };
-
         /** 获取，设置节点速度缩放 */
-        for (const key in componentMap) {
-            js.mixin(Node.prototype, key, {
-                _speedScale: 1,
+        js.mixin(Node.prototype, {
+            _speedScale: 1,
 
-                addChild(child: Node, zOrder?: number, tag?: number) {
-                    if (this._speedScale !== 1)
-                        child.speedScale = this._speedScale;
-                    child.setParent(this);
-                },
+            addChild(child: Node, zOrder?: number, tag?: number) {
+                if (this._speedScale !== 1)
+                    child.speedScale = this._speedScale;
+                child.setParent(this);
+            },
 
-                insertChild(child: Node, siblingIndex: number) {
-                    if (this._speedScale !== 1)
-                        child.speedScale = this._speedScale;
-                    child.setParent(this);
-                    child.setSiblingIndex(siblingIndex);
-                },
+            insertChild(child: Node, siblingIndex: number) {
+                if (this._speedScale !== 1)
+                    child.speedScale = this._speedScale;
+                child.setParent(this);
+                child.setSiblingIndex(siblingIndex);
+            },
 
-                get speedScale() {
-                    return this._speedScale;
-                },
-                set speedScale(value: number) {
-                    if (value === this._speedScale) return;
-                    this._speedScale = value;
-                    this.components.forEach(component => {
-                        if (component) {
-                            component.speedScale = value;
-                        }
-                    });
+            get speedScale() {
+                return this._speedScale;
+            },
+            set speedScale(value: number) {
+                if (value === this._speedScale) return;
+                this._speedScale = value;
+                this.components.forEach(component => {
+                    if (component) {
+                        component.speedScale = value;
+                    }
+                });
 
-                    this.children.forEach(child => {
-                        child.speedScale = value;
-                    });
-                }
-            });
-        }
-
+                this.children.forEach(child => {
+                    child.speedScale = value;
+                });
+            }
+        });
         
     }
 }

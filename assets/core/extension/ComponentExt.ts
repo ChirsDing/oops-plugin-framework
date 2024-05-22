@@ -46,11 +46,15 @@ if (!EDITOR) {
                 this._speedScale = value;
                 this.node.timeScale = value;
                 if (this instanceof AnimationComponent) {
+                    // @ts-ignore
                     if (this.speed !== value) {
+                        // @ts-ignore
                         if (this.speed === 0 ) {
                             this.resume();
                         }
+                        // @ts-ignore
                         this.speed = value;
+                        // @ts-ignore
                         if (this.speed === 0) {
                             this.pause();
                         }
@@ -60,7 +64,7 @@ if (!EDITOR) {
                     this.timeScale = value;
                 }
 
-                this.node.speedScale = value;
+                //this.node.speedScale = value;
             }
         });
     }
