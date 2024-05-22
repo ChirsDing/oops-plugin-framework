@@ -6,6 +6,7 @@
  */
 import { AudioClip, AudioSource, _decorator, error } from 'cc';
 import { oops } from '../../Oops';
+import { AudioMusic } from './AudioMusic';
 const { ccclass, menu } = _decorator;
 
 /**
@@ -16,6 +17,7 @@ const { ccclass, menu } = _decorator;
 @ccclass('AudioEffect')
 export class AudioEffect extends AudioSource {
     private effects: Map<string, AudioClip> = new Map<string, AudioClip>();
+    private voices: Map<string, AudioMusic> = new Map<string, AudioMusic>();
 
     private _progress: number = 0;
     /** 获取音乐播放进度 */
@@ -35,11 +37,12 @@ export class AudioEffect extends AudioSource {
 
     /**
      * 加载音效并播放
+     * @param bundle        资源包名
      * @param url           音效资源地址
      * @param callback      资源加载完成并开始播放回调
      */
-    load(url: string, callback?: Function) {
-        oops.res.load(url, AudioClip, (err: Error | null, data: AudioClip) => {
+    loadEffect(bundle: string, url: string, callback?: Function) {
+        oops.res.load(bundle, url, AudioClip, (err: Error | null, data: AudioClip) => {
             if (err) {
                 error(err);
             }
@@ -50,12 +53,43 @@ export class AudioEffect extends AudioSource {
         });
     }
 
+    /**
+     * 加载语音音效并播放
+     * @param bundle        资源包名
+     * @param url           音效资源地址
+     * @param callback      资源加载完成并开始播放回调
+     */
+    loadVoice(bundle: string, url: string, callback?: Function) {
+        let voice = this.node.addComponent(AudioMusic);
+        this.voices.set(url, voice);
+        voice.onComplete = () => {
+            this.voices.delete(url);
+            voice.release();
+            voice.destroy();
+        }
+        voice.load(bundle, url, callback);
+    }
+
+    /**
+     * 停止播放指定地址语音音效资源
+     * @param url           音效资源地址
+     */
+    stopVoice(url: string) {
+        if (this.voices.has(url)) {
+            this.voices.get(url)!.stop();
+        }
+    }
+
     /** 释放所有已使用过的音效资源 */
     releaseAll() {
         for (let key in this.effects) {
             oops.res.release(key);
         }
+        for (let key in this.voices) {
+            this.voices.get(key)!.stop();
+        }
         this.effects.clear();
+        this.voices.clear();
     }
 
     /**
@@ -66,6 +100,9 @@ export class AudioEffect extends AudioSource {
         if (this.effects.has(url)) {
             this.effects.delete(url);
             oops.res.release(url);
+        }
+        if (this.voices.has(url)) {
+            this.voices.get(url)!.stop();
         }
     }
 }

@@ -31,21 +31,26 @@ export class AudioManager extends Component {
 
     /**
      * 播放背景音乐
+     * @param bundle     资源包名
      * @param url        资源地址
      * @param callback   音乐播放完成事件
      */
-    playMusic(url: string, callback?: Function) {
+    playMusic(bundle: string, url: string, callback?: Function) {
         if (this._switch_music && !this.music.playing) {
             this.music.loop = false;
-            this.music.load(url, callback);
+            this.music.load(bundle, url, callback);
         }
     }
 
-    /** 循环播放背景音乐 */
-    playMusicLoop(url: string) {
+    /** 
+     * 循环播放背景音乐
+     * @param bundle     资源包名
+     * @param url        资源地址
+     */
+    playMusicLoop(bundle: string, url: string) {
         if (this._switch_music && !this.music.playing) {
             this.music.loop = true;
-            this.music.load(url);
+            this.music.load(bundle, url);
         }
     }
 
@@ -104,12 +109,32 @@ export class AudioManager extends Component {
 
     /**
      * 播放音效
+     * @param bundle     资源包名
      * @param url        资源地址
      */
-    playEffect(url: string) {
+    playEffect(bundle: string, url: string) {
         if (this._switch_effect) {
-            this.effect.load(url);
+            this.effect.loadEffect(bundle, url);
         }
+    }
+
+    /**
+     * 播放语音音效
+     * @param bundle     资源包名
+     * @param url        资源地址
+     */
+    playVoice(bundle: string, url: string) {
+        if (this._switch_effect) {
+            this.effect.loadVoice(bundle, url);
+        }
+    }
+
+    /**
+     * 停止播放指定地址语音音效资源
+     * @param url           音效资源地址
+     */
+    stopVoice(url: string) {
+        this.effect.stopVoice(url);
     }
 
     /** 

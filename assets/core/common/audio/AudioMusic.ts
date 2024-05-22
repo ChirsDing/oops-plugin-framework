@@ -35,12 +35,13 @@ export class AudioMusic extends AudioSource {
 
     /**
      * 加载音乐并播放
+     * @param bundle       资源包名
      * @param url          音乐资源地址
      * @param callback     加载完成回调
      */
-    load(url: string, callback?: Function) {
+    load(bundle: string, url: string, callback?: Function) {
         if (this._url == null) {
-            oops.res.load(url, AudioClip, (err: Error | null, data: AudioClip) => {
+            oops.res.load(bundle, url, AudioClip, (err: Error | null, data: AudioClip) => {
                 if (err) {
                     error(err);
                 }
