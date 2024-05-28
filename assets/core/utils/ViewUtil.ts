@@ -99,17 +99,18 @@ export class ViewUtil {
 
     /**
      * 加载预制并创建预制节点
+     * @param bundle 资源包名
      * @param path 资源路径
      */
-    static createPrefabNodeAsync(path: string): Promise<Node> {
+    static createPrefabNodeAsync(bundle: string, path: string): Promise<Node> {
         return new Promise(async (resolve, reject) => {
-            oops.res.load(path, Prefab, (err: Error | null, content: Prefab) => {
+            oops.res.load(bundle, path, Prefab, (err: Error | null, content: Prefab) => {
                 if (err) {
                     console.error(`名为【${path}】的资源加载失败`);
                     return;
                 }
 
-                var node = this.createPrefabNode(path);
+                var node = ViewUtil.createPrefabNode(path);
                 resolve(node);
             });
         });
