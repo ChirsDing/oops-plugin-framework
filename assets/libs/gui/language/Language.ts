@@ -3,7 +3,6 @@ import { EventDispatcher } from "../../../core/common/event/EventDispatcher";
 import { Logger } from "../../../core/common/log/Logger";
 import { LanguageData } from "./LanguageData";
 import { LanguagePack } from "./LanguagePack";
-import { oops } from "@oops/assets/core/Oops";
 
 export enum LanguageEvent {
     /** 语种变化事件 */
@@ -114,23 +113,5 @@ export class LanguageManager extends EventDispatcher {
         lang = lang.toLowerCase();
         this._languagePack.releaseLanguageAssets(lang);
         this.dispatchEvent(LanguageEvent.RELEASE_RES, lang);
-    }
-}
-
-// 编辑器环境下，挂载到window上
-if (EDITOR) {
-    oops.language = oops.language || new LanguageManager();
-
-    const win = window as any;
-    win.languageManager = win.languageManager || {
-        setLanguage: (lang: string) => {
-            console.warn(`editor set language ${lang}`);
-            oops.language.setLanguage(lang, (success: boolean) => {
-                console.warn(`update language ${oops.language.current} ${success ? 'success' : 'fail'}`);
-            });
-        },
-        getLangByID(labId: string): string {
-            return oops.language.getLangByID(labId);
-        }
     }
 }
