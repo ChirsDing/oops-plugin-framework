@@ -18,3 +18,4 @@ temp/
 # WebStorm
 #//////////////////////////
 .idea/
+.DS_Store

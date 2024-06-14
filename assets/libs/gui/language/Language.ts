@@ -1,3 +1,4 @@
+import { EDITOR } from "cc/env";
 import { EventDispatcher } from "../../../core/common/event/EventDispatcher";
 import { Logger } from "../../../core/common/log/Logger";
 import { LanguageData } from "./LanguageData";
@@ -70,7 +71,7 @@ export class LanguageManager extends EventDispatcher {
             language = this._defaultLanguage;
         }
 
-        if (language === LanguageData.current) {
+        if (language === LanguageData.current && !EDITOR) {
             callback(false);
             return;
         }

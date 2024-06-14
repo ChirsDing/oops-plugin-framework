@@ -12,6 +12,7 @@ import { LanguageData } from "./LanguageData";
 import { LanguageLabel } from "./LanguageLabel";
 import { LanguageSpine } from "./LanguageSpine";
 import { LanguageSprite } from "./LanguageSprite";
+import { EDITOR } from "cc/env";
 
 export class LanguagePack {
     /** JSON资源目录 */
@@ -65,9 +66,14 @@ export class LanguagePack {
     /** 多语言Excel配置表数据 */
     private loadTable(lang: string) {
         return new Promise(async (resolve, reject) => {
-            LanguageData.excel = await JsonUtil.loadAsync("Language");
-            if (LanguageData.excel) {
-                Logger.logConfig("config/game/Language", "下载语言包 table 资源");
+            if (EDITOR) {
+                console.warn("编辑器环境下，未处理加载table资源");
+                resolve(null);
+            } else {
+                LanguageData.excel = await JsonUtil.loadAsync("Language");
+                if (LanguageData.excel) {
+                    Logger.logConfig("config/game/Language", "下载语言包 table 资源");
+                }
             }
             resolve(null);
         });
@@ -77,38 +83,62 @@ export class LanguagePack {
     private loadTexture(lang: string) {
         return new Promise((resolve, reject) => {
             let path = `${this.texture}/${lang}`;
-            oops.res.loadDir(path, (err: any, assets: any) => {
-                if (err) {
-                    error(err);
-                    resolve(null);
-                    return;
-                }
-                Logger.logConfig(path, "下载语言包 textures 资源");
+
+            if (EDITOR) {
+                // TODO: 编辑器环境下
+                console.warn("编辑器环境下，未处理加载纹理资源");
                 resolve(null);
-            })
+            } else {
+                oops.res.loadDir(path, (err: any, assets: any) => {
+                    if (err) {
+                        error(err);
+                        resolve(null);
+                        return;
+                    }
+                    Logger.logConfig(path, "下载语言包 textures 资源");
+                    resolve(null);
+                })
+            }
         });
     }
 
     /** Json格式多语言资源 */
     private loadJson(lang: string) {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             let path = `${this.json}/${lang}`;
-            oops.res.load(path, JsonAsset, (err: Error | null, asste: JsonAsset) => {
-                if (err) {
-                    error(err);
+
+            if (EDITOR) {
+                const fs = require("fs");
+                const config = await Editor.Profile.getProject('oops-copilot');
+                let dir = `${config['Language Directory'].replace('project://', '')}`;
+                const file = `${Editor.Project.path}/${dir}/${lang}.json`;
+                if (fs.existsSync(file)) {
+                    const content = fs.readFileSync(file, 'utf-8');
+                    LanguageData.json = JSON.parse(content);
                     resolve(null);
-                    return;
+                } else {
+                    console.warn(`未找到语言包资源：${file}`);
+                    resolve(null);
                 }
 
-                LanguageData.json = asste.json;
-                Logger.logConfig(path, "下载语言包 json 资源");
+            } else {
+                oops.res.load(path, JsonAsset, (err: Error | null, asste: JsonAsset) => {
+                    if (err) {
+                        error(err);
+                        resolve(null);
+                        return;
+                    }
 
-                oops.res.load(path, TTFFont, (err: Error | null) => {
-                    if (err == null) Logger.logConfig(path, "下载语言包 ttf 资源");
+                    LanguageData.json = asste.json;
+                    Logger.logConfig(path, "下载语言包 json 资源");
 
-                    resolve(null);
-                });
-            })
+                    oops.res.load(path, TTFFont, (err: Error | null) => {
+                        if (err == null) Logger.logConfig(path, "下载语言包 ttf 资源");
+
+                        resolve(null);
+                    });
+                })
+            }
         });
     }
 
@@ -116,15 +146,20 @@ export class LanguagePack {
     private loadSpine(lang: string) {
         return new Promise((resolve, reject) => {
             let path = `${this.spine}/${lang}`;
-            oops.res.loadDir(path, (err: any, assets: any) => {
-                if (err) {
-                    error(err);
-                    resolve(null);
-                    return;
-                }
-                Logger.logConfig(path, "下载语言包 spine 资源");
+            if (EDITOR) {
+                console.warn("编辑器环境下，未处理加载spine资源");
                 resolve(null);
-            })
+            } else {
+                oops.res.loadDir(path, (err: any, assets: any) => {
+                    if (err) {
+                        error(err);
+                        resolve(null);
+                        return;
+                    }
+                    Logger.logConfig(path, "下载语言包 spine 资源");
+                    resolve(null);
+                })
+            }
         });
     }
 
