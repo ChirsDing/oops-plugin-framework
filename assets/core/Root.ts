@@ -15,6 +15,8 @@ import { TimerManager } from "./common/timer/TimerManager";
 import { GameManager } from "./game/GameManager";
 import { GUI } from "./gui/GUI";
 import { LayerManager } from "./gui/layer/LayerManager";
+import { settings } from "cc";
+import { Settings } from "cc";
 
 const { property } = _decorator;
 
@@ -98,6 +100,7 @@ export class Root extends Component {
         oops.language = new LanguageManager();
         oops.game = new GameManager(this.game);
         oops.gui = new LayerManager(this.gui);
+        this.setRemoteBundle();
         this.initGui();
         this.initEcsSystem();
         oops.ecs.init();
@@ -123,6 +126,10 @@ export class Root extends Component {
         screen.on("orientation-change", () => {
             oops.message.dispatchEvent(EventMessage.GAME_ORIENTATION);
         }, this);
+    }
+
+    private setRemoteBundle() {
+        oops.res.remoteBundles = settings.querySettings(Settings.Category.ASSETS, "remoteBundles"); // 远程资源包
     }
 
     private onShow() {

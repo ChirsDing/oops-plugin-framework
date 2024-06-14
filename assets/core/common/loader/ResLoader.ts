@@ -1,4 +1,5 @@
 import { Asset, AssetManager, Constructor, __private, assetManager, error, js, resources } from "cc";
+import { version } from "gltf-validator";
 
 export type ProgressCallback = __private._cocos_asset_asset_manager_deprecated__LoadProgressCallback;
 export type CompleteCallback<T = any> = any;       // (error: Error | null, asset: T) => void;  (error: Error | null, asset: T[], urls: string[]) => void;
@@ -23,6 +24,9 @@ interface ILoadResArgs<T extends Asset> {
 export class ResLoader {
     /** 全局默认加载的资源包名 */
     defaultBundleName: string = "resources";
+    remoteBundles: string[] = null!;
+    remoteServer: string = null!;
+    remoteVersion: string = null!;
 
     /**
      * 加载远程资源
@@ -322,11 +326,19 @@ oops.res.loadDir("game", onProgressCallback, onCompleteCallback);
             }
             else {
                 // 自动加载bundle
-                assetManager.loadBundle(args.bundle, (err, bundle) => {
-                    if (!err) {
-                        this.loadByBundleAndArgs(bundle, args);
-                    }
-                })
+                if(this.remoteBundles && this.remoteBundles.includes(args.bundle) && this.remoteServer) {
+                    assetManager.loadBundle(`${this.remoteServer}\\${args.bundle}`, { version: this.remoteVersion }, (err, bundle) => {
+                        if (!err) {
+                            this.loadByBundleAndArgs(bundle, args);
+                        }
+                    })
+                }else {
+                    assetManager.loadBundle(args.bundle, (err, bundle) => {
+                        if (!err) {
+                            this.loadByBundleAndArgs(bundle, args);
+                        }
+                    })
+                }
             }
         }
         else {
