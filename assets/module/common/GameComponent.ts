@@ -89,14 +89,14 @@ export class GameComponent extends Component {
     }
 
     /** 异步加载资源 */
-    loadAsync<T extends Asset>(bundleName: string, paths: string | string[], type: AssetType<T> | null, onProgress: ProgressCallback | null, onComplete: CompleteCallback<T> | null): void;
-    loadAsync<T extends Asset>(bundleName: string, paths: string | string[], onProgress: ProgressCallback | null, onComplete: CompleteCallback<T> | null): void;
-    loadAsync<T extends Asset>(bundleName: string, paths: string | string[], onComplete?: CompleteCallback<T> | null): void;
-    loadAsync<T extends Asset>(bundleName: string, paths: string | string[], type: AssetType<T> | null, onComplete?: CompleteCallback<T> | null): void;
-    loadAsync<T extends Asset>(paths: string | string[], type: AssetType<T> | null, onProgress: ProgressCallback | null, onComplete: CompleteCallback<T> | null): void;
-    loadAsync<T extends Asset>(paths: string | string[], onProgress: ProgressCallback | null, onComplete: CompleteCallback<T> | null): void;
-    loadAsync<T extends Asset>(paths: string | string[], onComplete?: CompleteCallback<T> | null): void;
-    loadAsync<T extends Asset>(paths: string | string[], type: AssetType<T> | null, onComplete?: CompleteCallback<T> | null): void;
+    loadAsync<T extends Asset>(bundleName: string, paths: string | string[], type: AssetType<T> | null, onProgress: ProgressCallback | null): Promise<T>;
+    loadAsync<T extends Asset>(bundleName: string, paths: string | string[], onProgress: ProgressCallback | null): Promise<T>;
+    loadAsync<T extends Asset>(bundleName: string, paths: string | string[]): Promise<T>;
+    loadAsync<T extends Asset>(bundleName: string, paths: string | string[], type: AssetType<T> | null): Promise<T>;
+    loadAsync<T extends Asset>(paths: string | string[], type: AssetType<T> | null, onProgress: ProgressCallback | null): Promise<T>;
+    loadAsync<T extends Asset>(paths: string | string[], onProgress: ProgressCallback | null): Promise<T>;
+    loadAsync<T extends Asset>(paths: string | string[]): Promise<T>;
+    loadAsync<T extends Asset>(paths: string | string[], type: AssetType<T> | null): Promise<T>;
     loadAsync<T extends Asset>(
         bundleName: string,
         paths?: string | string[] | AssetType<T> | ProgressCallback | CompleteCallback | null,
