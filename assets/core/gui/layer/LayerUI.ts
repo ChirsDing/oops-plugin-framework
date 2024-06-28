@@ -1,8 +1,9 @@
 import { error, instantiate, Node, Prefab, warn, Widget } from "cc";
 import { oops } from "../../Oops";
+import { AnimationUtil } from "../../utils/AnimationUtil";
 import { UICallbacks, ViewParams } from "./Defines";
 import { DelegateComponent } from "./DelegateComponent";
-import { UIConfig } from "./LayerManager";
+import { UIAnimationType, UIConfig } from "./LayerManager";
 
 /** 界面层对象 */
 export class LayerUI extends Node {
@@ -79,12 +80,27 @@ export class LayerUI extends Node {
                 let comp = childNode.addComponent(DelegateComponent);
                 comp.vp = vp;
                 comp.onHide = this.onHide.bind(this);
+                comp.onShow = this.onShow.bind(this);
 
                 this.showUi(vp);
+                this.showAnim(vp);
+                this.setHideAnim(vp);
             });
         }
     }
 
+    /**
+     * 显示界面 - 该方法会在界面动画播放完调用
+     * @param vp  视图参数
+     */
+    protected onShow() {
+        // 触发窗口显示事件
+    }
+
+    /**
+     * 隐藏界面 - 该方法会在界面动画播放完调用
+     * @param vp  视图参数
+     */
     protected onHide(vp: ViewParams) {
         this.ui_nodes.delete(vp.config.prefab);
     }
@@ -101,6 +117,92 @@ export class LayerUI extends Node {
 
         // 标记界面为使用状态
         vp.valid = true;
+    }
+
+    /**
+     * 显示界面动画
+     * @param vp  视图参数
+     */
+    protected async showAnim(vp: ViewParams) {
+        let duration = 0.5;
+        if ( vp.config.showAnim && vp.config.showAnim > UIAnimationType.None) 
+        {
+            switch (vp.config.showAnim) {
+                case UIAnimationType.Show_Fade:
+                    await AnimationUtil.fadeIn(vp.node, duration);
+                    break;
+                case UIAnimationType.Show_SlideDown:
+                    await AnimationUtil.moveFromTop(vp.node, screen.height, duration);
+                    break;
+                case UIAnimationType.Show_Scale:
+                    await AnimationUtil.scaleShow(vp.node, 1, duration);
+                    break;
+                case UIAnimationType.Show_SlideUp:
+                    await AnimationUtil.moveFromBottom(vp.node, screen.height, duration);
+                    break;
+                case UIAnimationType.Show_SlideLeft:
+                    await AnimationUtil.moveFromRight(vp.node, screen.width, duration);
+                    break;
+                case UIAnimationType.Show_SlideRight:
+                    await AnimationUtil.moveFromLeft(vp.node, screen.width, duration);
+                    break;
+                default:
+                    console.warn(`未知的界面动画类型：${vp.config.showAnim}`);
+                    break;
+            }
+        }
+        // 触发窗口显示动画事件
+        let comp = vp.node.getComponent(DelegateComponent)!;
+        comp.showAnimEnd();
+    }
+
+    /**
+     * 设置界面隐藏动画回调
+     * @param vp  视图参数
+     */
+    protected setHideAnim(vp: ViewParams) {
+        // 设置界面隐藏动画回调
+        if (vp.config.hideAnim && vp.config.hideAnim > UIAnimationType.None) {
+            let onBeforeRemove = vp.callbacks.onBeforeRemove;
+            vp.callbacks.onBeforeRemove = async (node: Node, callback: Function) => {
+                await this.hideAnim(vp);
+                
+                onBeforeRemove ? onBeforeRemove(node, callback) : callback();
+            }
+        }
+    }
+
+    /**
+     * 隐藏界面动画
+     * @param vp  视图参数
+     */
+    protected async hideAnim(vp: ViewParams) {
+        let duration = 0.3;
+        if (vp.config.hideAnim && vp.config.hideAnim > UIAnimationType.None) {
+            switch (vp.config.hideAnim) {
+                case UIAnimationType.Hide_Fade:
+                    await AnimationUtil.fadeOut(vp.node, duration);
+                    break;
+                case UIAnimationType.Hide_SlideDown:
+                    await AnimationUtil.moveToTop(vp.node, screen.height, duration);
+                    break;
+                case UIAnimationType.Hide_Scale:
+                    await AnimationUtil.scaleHide(vp.node, 0, duration);
+                    break;
+                case UIAnimationType.Hide_SlideUp:
+                    await AnimationUtil.moveToBottom(vp.node, screen.height, duration);
+                    break;
+                case UIAnimationType.Hide_SlideLeft:
+                    await AnimationUtil.moveToRight(vp.node, screen.width, duration);
+                    break;
+                case UIAnimationType.Hide_SlideRight:
+                    await AnimationUtil.moveToLeft(vp.node, screen.width, duration);
+                    break;
+                default:
+                    console.warn(`未知的界面动画类型：${vp.config.hideAnim}`);
+                    break;
+            }
+        }
     }
 
     /**

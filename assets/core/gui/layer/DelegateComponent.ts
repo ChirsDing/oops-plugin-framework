@@ -15,6 +15,8 @@ const { ccclass } = _decorator;
 export class DelegateComponent extends Component {
     /** 视图参数 */
     vp: ViewParams = null!;
+    /** 界面显示回调 - 包括界面动画播放完 */
+    onShow: Function = null!;
     /** 界面关闭回调 - 包括关闭动画播放完 */
     onHide: Function = null!;
 
@@ -25,6 +27,13 @@ export class DelegateComponent extends Component {
         if (typeof this.vp.callbacks.onAdded === "function") {
             this.vp.callbacks.onAdded(this.node, this.vp.params);
         }
+    }
+
+    showAnimEnd() {
+        // 触发窗口组件上显示动画事件
+        this.applyComponentsFunction(this.node, "onShow", this.vp.params);
+        // 界面显示舞台事件
+        this.onShow && this.onShow();
     }
 
     /** 删除节点，该方法只能调用一次，将会触发onBeforeRemoved回调 */

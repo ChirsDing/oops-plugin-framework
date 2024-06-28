@@ -26,6 +26,37 @@ export enum LayerType {
     Guide = "LayerGuide"
 }
 
+/** 界面动画类型 */
+export enum UIAnimationType {
+    /** 无动画 */
+    None = 0,
+    /** 缩放 */
+    Show_Scale = 1,
+    /** 淡入淡出 */
+    Show_Fade = 2,
+    /** 从下往上 */
+    Show_SlideUp = 3,
+    /** 从上往下 */
+    Show_SlideDown = 4,
+    /** 从左往右 */
+    Show_SlideRight = 5,
+    /** 从右往左 */
+    Show_SlideLeft = 6,
+
+    /** 缩放 */
+    Hide_Scale = 11,
+    /** 淡入淡出 */
+    Hide_Fade = 12,
+    /** 从下往上 */
+    Hide_SlideUp = 13,
+    /** 从上往下 */
+    Hide_SlideDown = 14,
+    /** 从左往右 */
+    Hide_SlideRight = 15,
+    /** 从右往左 */
+    Hide_SlideLeft = 16,
+}
+
 /** 
  * 界面配置结构体
  * @example
@@ -53,6 +84,10 @@ export interface UIConfig {
     prefab: string;
     /** 是否自动施放 */
     destroy?: boolean;
+    /** 显示动画类型 */
+    showAnim?: UIAnimationType;
+    /** 隐藏动画类型 */
+    hideAnim?: UIAnimationType;
 
     /** -----弹窗属性----- */
     /** 是否触摸非窗口区域关闭 */
