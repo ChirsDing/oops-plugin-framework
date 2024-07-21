@@ -9,15 +9,8 @@
 
 import { _decorator } from "cc";
 import { oops } from "../../Oops";
-import { AudioBase, PlayType } from "./AudioBase";
+import { AudioBase, EffectStatus, PlayType } from "./AudioBase";
 const { ccclass, menu } = _decorator;
-
-export enum EffectStatus {
-    LOAD = 0,       // 加载中
-    START = 1,      // 播放中
-    COMPLETE = 2,   // 播放完成
-    DESTROY = 9,    // 待销毁
-}
 
 /** 音效基类 */
 @ccclass('AudioEffectSource')
@@ -25,7 +18,6 @@ export class AudioEffectSource extends AudioBase {
 
     private _polyphonyType : number = 0;
     private _priorityType : number = 0;
-    private _status : EffectStatus = EffectStatus.LOAD;
     private _curTime : number = 0; // 当前播放时间,单位秒,用于记录oneShot类型播放进度
     private _resUrl : string = null!;
 
@@ -146,6 +138,8 @@ export class AudioEffectSource extends AudioBase {
             {
                 this.endCallback()
             }
+        } else if(this._status === EffectStatus.LOAD && this.playing ) {
+            this._status = EffectStatus.START;
         }
     }
 }

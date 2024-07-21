@@ -6,8 +6,8 @@
  */
 import { Component, _decorator } from 'cc';
 import { oops } from '../../Oops';
-import { PlayType } from './AudioBase';
-import { AudioEffectSource, EffectStatus } from './AudioEffectSource';
+import { EffectStatus, PlayType } from './AudioBase';
+import { AudioEffectSource } from './AudioEffectSource';
 const { ccclass, menu } = _decorator;
 
 
@@ -100,6 +100,8 @@ export class AudioEffect extends Component {
         comp.resUrl = url;
         comp.fadeTime = 0;
         comp.mute = oops.audio.muteEffect;
+
+        this._effectsPlaying.push(comp);
         
         if (!this.addPolyphonyCount(comp))
         {
@@ -113,8 +115,12 @@ export class AudioEffect extends Component {
             return;
         }
         comp.load(url, playType, bundle, () => {
+            if(comp.status === EffectStatus.ABORT){
+                comp.status = EffectStatus.DESTROY;
+                comp.release();
+                comp.destroy();
+            }
             this.playPriority(comp);
-            this._effectsPlaying.push(comp);
             callback && callback();
         });
     }
@@ -211,7 +217,7 @@ export class AudioEffect extends Component {
             this._maxPriorityType = comp.priorityType;
             for (let i = this._effectsPlaying.length - 1; i >= 0; i--) {
                 
-                if (this._effectsPlaying[i]) {
+                if (this._effectsPlaying[i] && this._effectsPlaying[i] !== comp) {
                     this._effectsPlaying[i].vol = oops.audio.volumeAvoid;
                 }
             }

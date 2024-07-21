@@ -91,8 +91,8 @@ export class ViewUtil {
      * 从资源缓存中找到预制资源名并创建一个显示对象
      * @param path 资源路径
      */
-    static createPrefabNode(path: string): Node {
-        var p: Prefab = oops.res.get(path, Prefab)!;
+    static createPrefabNode(path: string, bundle?:string): Node {
+        var p: Prefab = oops.res.get(path, Prefab, bundle)!;
         var n = instantiate(p);
         return n;
     }
@@ -110,7 +110,7 @@ export class ViewUtil {
                     return;
                 }
 
-                var node = ViewUtil.createPrefabNode(path);
+                var node = ViewUtil.createPrefabNode(path, bundle);
                 resolve(node);
             });
         });

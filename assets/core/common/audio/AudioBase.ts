@@ -17,6 +17,14 @@ export enum PlayType {
     ONESHOT = 2
 }
 
+export enum EffectStatus {
+    LOAD = 0,       // 加载中
+    START = 1,      // 播放中
+    COMPLETE = 2,   // 播放完成
+    ABORT = 3,      // 中断
+    DESTROY = 9,    // 待销毁
+}
+
 /**
  * 注：用playOneShot播放的音乐效果，在播放期间暂时没办法即时关闭音乐
  */
@@ -36,6 +44,7 @@ export class AudioBase extends AudioSource {
     protected _vol : number = 1;
     protected _mute: boolean = false;
     protected _baseVolume: number = 1;
+    protected _status : EffectStatus = EffectStatus.LOAD;
 
     /** 获取音乐播放进度 */
     get progress(): number {
@@ -124,8 +133,10 @@ export class AudioBase extends AudioSource {
                     error(err);
                     return;
                 }
-                this.resetVolume(url);
-                this.playStart(url, data);
+                if (this._status !== EffectStatus.ABORT) {
+                    this.resetVolume(url);
+                    this.playStart(url, data);
+                }
                 callback && callback();
             });
         }else{
@@ -190,7 +201,7 @@ export class AudioBase extends AudioSource {
             this.enabled = true;
             this._url = url;
             this.clip = clip;
-            this.onPlay();
+            //this.onPlay();
             this.playOneShot(clip, this.volume);
         }else{
             if (this.playing) {
@@ -205,7 +216,7 @@ export class AudioBase extends AudioSource {
 
             this._url = url;
             this.clip = clip;
-            this.onPlay();
+            //this.onPlay();
 
             await this.fadeInPlay();
         }
@@ -218,6 +229,8 @@ export class AudioBase extends AudioSource {
         if (this._isPlay) {
             super.stop();
             this._isPlay = false;
+        } else {
+            this._status = EffectStatus.ABORT;
         }
     }
 
