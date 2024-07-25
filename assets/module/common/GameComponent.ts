@@ -11,6 +11,7 @@ import { EventMessage, ListenerFunc } from "../../core/common/event/EventMessage
 import { AssetType, CompleteCallback, ProgressCallback } from "../../core/common/loader/ResLoader";
 import { ViewUtil } from "../../core/utils/ViewUtil";
 import { ButtonTouchLong } from "../../libs/gui/button/ButtonTouchLong";
+import { PlayType } from "../../core/common/audio/AudioBase";
 
 const { ccclass } = _decorator;
 
@@ -196,28 +197,29 @@ export class GameComponent extends Component {
     //#region 音频播放管理
     /**
      * 播放背景音乐
-     * @param url       资源地址
-     */
-    playMusic(url: string) {
-        oops.audio.playMusic(url);
-    }
-
-    /**
-     * 循环播放背景音乐
+     * @param bundleName 资源包名
      * @param url        资源地址
+     * @param [loop=true] 是否循环播放
+     * @param [loopStart=0] 循环开始时间
+     * @param [loopEnd=0] 循环结束时间
+     * @param [callback] 播放开始回调
      */
-    playMusicLoop(url: string) {
+    playMusicByBundle(bundleName: string, url: string, loop: boolean = true, loopStart: number = 0, loopEnd: number = 0, callback?: Function) {
         oops.audio.stopMusic();
-        oops.audio.playMusicLoop(url);
+        oops.audio.playMusic(bundleName, url, loop, loopStart, loopEnd, callback);
     }
 
     /**
-    * 播放音效
-    * @param url        资源地址
-    */
-    playEffect(url: string) {
-        this.resPathsAudioEffect.set(url, oops.res.defaultBundleName);
-        oops.audio.playEffect(url);
+     * 播放音效
+     * @param bundleName    资源包名
+     * @param url           资源地址
+     * @param [playType=PlayType.MUSIC] 播放类型
+     * @param [priorityType=0] 优先级类型
+     * @param [polyphonyType=0] 复音类型
+     */
+    playEffect(bundleName: string, url: string, playType: PlayType = PlayType.MUSIC, priorityType: number = 0, polyphonyType: number = 0) {
+        this.resPathsAudioEffect.set(url, bundleName);
+        oops.audio.playEffect(bundleName, url, playType, priorityType, polyphonyType);
     }
     //#endregion
 
