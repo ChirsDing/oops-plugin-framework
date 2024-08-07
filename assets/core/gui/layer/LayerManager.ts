@@ -11,19 +11,23 @@ import { UIMap } from "./UIMap";
 /** 界面层类型 */
 export enum LayerType {
     /** 二维游戏层 */
-    Game = "LayerGame",
+    Game = 0,
     /** 主界面层 */
-    UI = "LayerUI",
+    UI = 1,
     /** 弹窗层 */
-    PopUp = "LayerPopUp",
+    PopUp = 2,
     /** 模式窗口层 */
-    Dialog = "LayerDialog",
+    Dialog = 3,
     /** 系统触发模式窗口层 */
-    System = "LayerSystem",
+    System = 4,
     /** 滚动消息提示层 */
-    Notify = "LayerNotify",
+    Notify = 5,
     /** 新手引导层 */
-    Guide = "LayerGuide"
+    Guide = 6,
+    /** 最顶层（处理loading等） */
+    Top = 7,
+    /** GM 界面层 */
+    GM = 8,
 }
 
 /** 界面动画类型 */
@@ -108,6 +112,8 @@ export class LayerManager {
     guide!: Node;
     /** 界面地图 */
     uiMap!: UIMap;
+    /**UI的top层 */
+    top!: LayerUI;
 
     /** 界面层 */
     private ui!: LayerUI;
@@ -119,6 +125,9 @@ export class LayerManager {
     private system!: LayerDialog;
     /** 消息提示控制器，请使用show方法来显示 */
     private notify!: LayerNotify;
+    /** GM 界面层 */
+    private gm!: LayerPopUp;
+
     /** UI配置 */
     private configs: { [key: number]: UIConfig } = {};
 
@@ -212,6 +221,12 @@ export class LayerManager {
             case LayerType.System:
                 this.system.add(config, uiArgs, callbacks);
                 break;
+            case LayerType.Top:
+                this.top.add(config, uiArgs, callbacks);
+                break;
+            case LayerType.GM:
+                this.gm.add(config, uiArgs, callbacks);
+                break;
         }
     }
 
@@ -285,6 +300,12 @@ export class LayerManager {
             case LayerType.System:
                 result = this.system.has(config.prefab);
                 break;
+            case LayerType.Top:
+                result = this.top.has(config.prefab);
+                break;
+            case LayerType.GM:
+                result = this.gm.has(config.prefab);
+                break;
         }
         return result;
     }
@@ -316,6 +337,12 @@ export class LayerManager {
             case LayerType.System:
                 result = this.system.get(config.prefab);
                 break;
+            case LayerType.Top:
+                result = this.top.get(config.prefab);
+                break;
+            case LayerType.GM:
+                result = this.gm.get(config.prefab);
+                break;
         }
         return result;
     }
@@ -346,6 +373,12 @@ export class LayerManager {
                 break;
             case LayerType.System:
                 this.system.remove(config.prefab, isDestroy);
+                break;
+            case LayerType.Top:
+                this.top.remove(config.prefab, isDestroy);
+                break;                
+            case LayerType.GM:
+                this.gm.remove(config.prefab, true);
                 break;
         }
     }
@@ -384,6 +417,14 @@ export class LayerManager {
                             // @ts-ignore 注：不对外使用
                             this.system.removeCache(comp.vp.config.prefab);
                             break;
+                        case LayerType.Top:
+                            // @ts-ignore 注：不对外使用
+                            this.top.removeCache(comp.vp.config.prefab);
+                            break;
+                        case LayerType.GM:
+                            // @ts-ignore 注：不对外使用
+                            this.gm.removeCache(comp.vp.config.prefab);
+                            break;
                     }
                 }
             }
@@ -405,6 +446,35 @@ export class LayerManager {
         this.popup.clear(isDestroy);
         this.dialog.clear(isDestroy);
         this.system.clear(isDestroy);
+        this.gm.clear(isDestroy);
+    }
+
+    /**
+     * 根据传入的 LayerType 枚举清除对应节点下的窗口
+     * @param layer 对应的 LayerType 枚举
+     * @param isDestroy 移除后是否释放
+     */
+    clearByLayerType(layer: LayerType, isDestroy: boolean = false) {
+        switch (layer) {
+            case LayerType.UI:
+                this.ui.clear(isDestroy);
+                break;
+            case LayerType.PopUp:
+                this.popup.clear(isDestroy);
+                break;
+            case LayerType.Dialog:
+                this.dialog.clear(isDestroy);
+                break;
+            case LayerType.System:
+                this.system.clear(isDestroy);
+                break;
+            case LayerType.Top:
+                this.top.clear(isDestroy);
+                break;
+            case LayerType.GM:
+                this.gm.clear(isDestroy);
+                break;
+        }
     }
 
     /**
@@ -415,15 +485,16 @@ export class LayerManager {
         this.root = root;
         this.camera = this.root.getComponentInChildren(Camera)!;
 
-        this.game = this.create_node(LayerType.Game);
+        this.game = this.create_node(`Layer${LayerType[LayerType.Game]}`);
 
-        this.ui = new LayerUI(LayerType.UI);
-        this.popup = new LayerPopUp(LayerType.PopUp);
-        this.dialog = new LayerDialog(LayerType.Dialog);
-        this.system = new LayerDialog(LayerType.System);
-        this.notify = new LayerNotify(LayerType.Notify);
-
-        this.guide = this.create_node(LayerType.Guide);
+        this.ui = new LayerUI(`Layer${LayerType[LayerType.UI]}`);
+        this.popup = new LayerPopUp(`Layer${LayerType[LayerType.PopUp]}`);
+        this.dialog = new LayerDialog(`Layer${LayerType[LayerType.Dialog]}`);
+        this.system = new LayerDialog(`Layer${LayerType[LayerType.System]}`);
+        this.notify = new LayerNotify(`Layer${LayerType[LayerType.Notify]}`);
+        this.guide = this.create_node(`Layer${LayerType[LayerType.Guide]}`);
+        this.top = new LayerUI(`Layer${LayerType[LayerType.Top]}`);
+        this.gm = new LayerPopUp(`Layer${LayerType[LayerType.GM]}`);
 
         root.addChild(this.game);
         root.addChild(this.ui);
@@ -432,6 +503,8 @@ export class LayerManager {
         root.addChild(this.system);
         root.addChild(this.notify);
         root.addChild(this.guide);
+        root.addChild(this.top);
+        root.addChild(this.gm);
     }
 
     private create_node(name: string) {
