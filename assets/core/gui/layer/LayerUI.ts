@@ -63,6 +63,8 @@ export class LayerUI extends Node {
     protected load(vp: ViewParams, bundle?: string) {
         if (vp && vp.node) {
             this.showUi(vp);
+            this.showAnim(vp);
+            this.setHideAnim(vp);
         }
         else {
             // 优先加载配置的指定资源包中资源，如果没配置则加载默认资源包资源
@@ -125,6 +127,7 @@ export class LayerUI extends Node {
      */
     protected async showAnim(vp: ViewParams) {
         let duration = 0.5;
+        let wait = false;
         if ( vp.config.showAnim && vp.config.showAnim > UIAnimationType.None) 
         {
             switch (vp.config.showAnim) {
@@ -147,13 +150,16 @@ export class LayerUI extends Node {
                     await AnimationUtil.moveFromLeft(vp.node, screen.width, duration);
                     break;
                 default:
+                    wait = true;
                     console.warn(`未知的界面动画类型：${vp.config.showAnim}`);
                     break;
             }
+        } else {
+            wait = true;
         }
         // 触发窗口显示动画事件
         let comp = vp.node.getComponent(DelegateComponent)!;
-        comp.showAnimEnd();
+        wait ? comp.scheduleOnce(() => { comp.showAnimEnd();}, 0) : comp.showAnimEnd();
     }
 
     /**
