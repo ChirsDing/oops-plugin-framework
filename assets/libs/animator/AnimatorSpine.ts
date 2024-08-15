@@ -99,8 +99,8 @@ export default class AnimatorSpine extends AnimatorBase {
      * @param scale 缩放倍率
      */
     protected scaleTime(scale: number) {
-        if (scale > 0)
-            this._spine.timeScale = scale;
+        if (scale >= 0)
+            this._spine.timeScale *= scale;
     }
 
     /**
