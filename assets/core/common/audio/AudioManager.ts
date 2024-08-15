@@ -142,7 +142,7 @@ export class AudioManager extends Component {
      */
     set volumeMusic(value: number) {
         this._volume_music = value;
-        this.music.vol = this.music.vol;
+        this.music.vol = this._volume_music;
     }
 
     /**

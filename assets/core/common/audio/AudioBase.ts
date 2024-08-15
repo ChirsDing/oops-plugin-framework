@@ -113,7 +113,7 @@ export class AudioBase extends AudioSource {
             return;
         }
 
-        if (this._url === null || url === null) return;
+        if (this._url === null && url === null) return;
 
         this.volume = this._vol * oops.audio.volumeMusic;
         this._baseVolume = this.volume;
@@ -201,7 +201,7 @@ export class AudioBase extends AudioSource {
             this.enabled = true;
             this._url = url;
             this.clip = clip;
-            //this.onPlay();
+            this.onPlay();
             this.playOneShot(clip, this.volume);
         }else{
             if (this.playing) {
