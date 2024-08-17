@@ -52,14 +52,14 @@ export class JsonUtil {
      * 异步加载Json数据表
      * @param name 资源名
      */
-    static loadAsync(name: string) {
+    static loadAsync(name: string, bundle: string = oops.res.defaultBundleName): Promise<any> {
         return new Promise((resolve, reject) => {
             if (data.has(name)) {
                 resolve(data.get(name))
             }
             else {
                 var url = path + name;
-                oops.res.load(url, JsonAsset, (err: Error | null, content: JsonAsset) => {
+                oops.res.load(bundle, url, JsonAsset, (err: Error | null, content: JsonAsset) => {
                     if (err) {
                         console.warn(err.message);
                         resolve(null);
