@@ -97,12 +97,14 @@ export class ECSEntity {
     /**
      * 移除子实体
      * @param entity 被移除的实体对象
+     * @param isDestory 被移除的实体是否释放，默认为释放
      * @returns 
      */
-    removeChild(entity: ECSEntity) {
+    removeChild(entity: ECSEntity, isDestory = true) {
         if (this.children == null) return;
 
         this.children.delete(entity.eid);
+        if (isDestory) entity.destroy();
 
         if (this.children.size == 0) {
             this._children = null;
@@ -260,7 +262,7 @@ export class ECSEntity {
     }
 
     private _remove(comp: CompType<ecs.IComp>) {
-        this.remove(comp, false);
+        this.remove(comp, true);
     }
 
     /** 销毁实体，实体会被回收到实体缓存池中 */
@@ -268,9 +270,13 @@ export class ECSEntity {
         if (this._children) {
             this._children.forEach(e => {
                 this.removeChild(e);
-                e.destroy();
             });
         }
+
+        if (this._parent) {
+            this._parent.removeChild(this, false);
+        }
+        this._parent = null;
 
         this.compTid2Ctor.forEach(this._remove, this);
         destroyEntity(this);

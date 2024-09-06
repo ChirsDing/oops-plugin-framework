@@ -63,5 +63,12 @@ export class LayerUtil {
             LayerUtil.setNodeLayer(item, n);
         });
     }
+
+    static setNodeLayerNumber(layer: number, node: Node) {
+        node.layer = layer;
+        node.children.forEach(n => {
+            LayerUtil.setNodeLayerNumber(layer, n);
+        })
+    }
 }
 

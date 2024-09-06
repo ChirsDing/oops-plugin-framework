@@ -1,4 +1,4 @@
-import { Button, Canvas, Color, EditBox, Graphics, Label, Layout, Mask, Node, PageView, ProgressBar, RichText, ScrollView, Size, Skeleton, Slider, Sprite, Toggle, UIOpacity, UIRenderer, UITransform, Widget, v3 } from "cc";
+import { Button, Canvas, Color, Component, EditBox, Graphics, Label, Layout, Mask, Node, PageView, ProgressBar, RichText, ScrollView, Size, Slider, Sprite, Toggle, UIOpacity, UIRenderer, UITransform, Widget, js, v3 } from "cc";
 import { EDITOR } from "cc/env";
 
 // ========= 扩展 cc 提示声明 =========
@@ -58,6 +58,8 @@ declare module "cc" {
         angle_z: number;
         /** script bind */
         bind: boolean;
+
+        getComponentInParent<T extends Component>(classConstructor: Constructor<T> | AbstractedConstructor<T>): T | null;
     }
 }
 
@@ -322,6 +324,21 @@ if (!EDITOR) {
             set: function (value: number) {
                 let self: Node = this;
                 self.scale = v3(self.scale.x, self.scale.y, value);
+            }
+        });
+
+        js.mixin(Node.prototype, {
+            getComponentInParent<T extends Component>(classConstructor: Constructor<T> | AbstractedConstructor<T>): T | null {
+                let parent = this.parent;
+                while (parent) {
+                    let comp = parent.getComponent(classConstructor);
+                    if (comp) {
+                        return comp;
+                    } else {
+                        parent = parent.parent;
+                    }
+                }
+                return null;
             }
         });
     }
