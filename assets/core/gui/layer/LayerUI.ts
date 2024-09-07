@@ -55,6 +55,15 @@ export class LayerUI extends Node {
         this.load(vp, config.bundle)
     }
 
+    private readd(config: UIConfig, params?: any, callbacks?: UICallbacks) {
+        let vp = this.ui_cache.get(config.prefab)!;
+        vp.params = params ?? {};
+        vp.callbacks = callbacks ?? {};
+        vp.valid = true;
+
+        this.load(vp, config.bundle)
+    }
+
     /**
      * 加载界面资源
      * @param vp         显示参数
@@ -62,8 +71,9 @@ export class LayerUI extends Node {
      */
     protected load(vp: ViewParams, bundle?: string) {
         if (vp && vp.node) {
+            this.reset(vp);
             this.showUi(vp);
-            this.showAnim(vp);
+            this.showAnim(vp, false);
             this.setHideAnim(vp);
         }
         else {
@@ -91,6 +101,14 @@ export class LayerUI extends Node {
         }
     }
 
+    reset(vp: ViewParams) {
+        if (vp.node) {
+            vp.node.opacity = 255;
+            vp.node.scale.set(1, 1);
+            vp.node.position.set(0, 0);
+        }
+    }
+
     /**
      * 显示界面 - 该方法会在界面动画播放完调用
      * @param vp  视图参数
@@ -114,8 +132,8 @@ export class LayerUI extends Node {
     protected showUi(vp: ViewParams) {
         // 触发窗口添加事件
         let comp = vp.node.getComponent(DelegateComponent)!;
-        comp.add();
         vp.node.parent = this;
+        comp.add();
 
         // 标记界面为使用状态
         vp.valid = true;
@@ -125,10 +143,10 @@ export class LayerUI extends Node {
      * 显示界面动画
      * @param vp  视图参数
      */
-    protected async showAnim(vp: ViewParams) {
+    protected async showAnim(vp: ViewParams, showAnim : boolean = true) {
         let duration = 0.5;
         let wait = false;
-        if ( vp.config.showAnim && vp.config.showAnim > UIAnimationType.None) 
+        if ( showAnim && vp.config.showAnim && vp.config.showAnim > UIAnimationType.None) 
         {
             switch (vp.config.showAnim) {
                 case UIAnimationType.Show_Fade:
