@@ -7,6 +7,8 @@
 import { Component, Node, _decorator } from "cc";
 import { oops } from "../../Oops";
 import { ViewParams } from "./Defines";
+import { director } from "cc";
+import { Director } from "cc";
 
 const { ccclass } = _decorator;
 
@@ -71,7 +73,7 @@ export class DelegateComponent extends Component {
             // 释放界面显示对象
             this.node.destroy();
 
-            this.scheduleOnce(() => {
+            director.once(Director.EVENT_AFTER_UPDATE, () => {
                 // 释放界面相关资源
                 oops.res.release(vp.config.prefab);
             });
