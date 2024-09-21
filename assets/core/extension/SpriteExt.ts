@@ -49,10 +49,11 @@ if (!VMEnv.editor) {
             },
             
             releaseRes(path: string, bundle:string) {
-                this.spriteFrame = null;
-                let retSF = oops.res.get(path, SpriteFrame, bundle);
-                if (retSF) {
-                    retSF.decRef();
+                if (path.endsWith("/spriteFrame")) {
+                    let retSF = oops.res.get(path, SpriteFrame, bundle);
+                    if (retSF) {
+                        retSF.decRef();
+                    }
                 }
             },
 
@@ -62,7 +63,7 @@ if (!VMEnv.editor) {
                 }
                 
                 if (this.resId && this.bundle) {
-                    this.spriteFrame = null;
+                    //this.spriteFrame = null;
                     this.releaseRes(this.resId, this.bundle);
                     this.resId = "";
                     this.bundle = "";
