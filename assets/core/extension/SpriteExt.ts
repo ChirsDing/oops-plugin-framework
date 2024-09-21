@@ -1,10 +1,9 @@
 import { GameBundle } from "@game/common/config/GameBundle";
 import { VMEnv } from "@oops/assets/libs/model-view/VMEnv";
-import { GameComponent } from "@oops/assets/module/common/GameComponent";
 import { js, Sprite, SpriteFrame } from "cc";
 import { oops } from "../Oops";
 import { NodeEventType } from "cc";
-import { EDITOR } from 'internal:constants';
+import { EDITOR } from "cc/env";
 
 declare module "cc" {
     // 这里使用 interface 进行扩展，如果使用 class 则会与现有的 d.ts 有冲突
