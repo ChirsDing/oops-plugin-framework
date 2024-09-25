@@ -21,30 +21,44 @@ if (!VMEnv.editor) {
         js.mixin(Sprite.prototype, {
             resId: "",
             bundle: "",
+            resLoading: "",
+            bundleLoading: "",
+
             async setResID(path: string, bundle?:string) {
-                if (this.resId === path && this.bundle === bundle) {
+                bundle = bundle ?? GameBundle.Bundle;
+                if (this.resLoading === path && this.bundleLoading === bundle) {
                     return;
                 }
-                let lastResId = this.resId;
-                let lastBundle = this.bundle;
+                this.resLoading = path;
+                this.bundleLoading = bundle;
 
-                this.resId = path;
-                this.bundle = bundle || GameBundle.Bundle;
+                let setRes = async (pathLoading:string, bundleLoading: string) => {
+                    let retSF = oops.res.get(pathLoading, SpriteFrame, bundleLoading);
+                    retSF = retSF ?? await oops.res.loadAsync(this.bundle, path, SpriteFrame);
+                    if (!retSF) {
+                        if (pathLoading === this.resLoading && bundleLoading === this.bundleLoading) {
+                            this.spriteFrame = null;
+                            this.resLoading = "";
+                            this.bundleLoading = "";
+                        }
+                        return;
+                    }
+                    
+                    retSF.addRef();
+                    
+                    if (!this.isValid || this.resLoading !== pathLoading || this.bundleLoading !== bundleLoading) {
+                        // 如果在加载过程中，资源已经被释放了，就不再设置了
+                        retSF.decRef();
+                        return;
+                    }
 
-                let retSF = await oops.res.loadAsync(this.bundle, path, SpriteFrame);
-                if (!retSF) {
-                    return;
-                }
-                
-                retSF.addRef();
-                if (!this.isValid || this.resId !== path || this.bundle !== bundle) {
-                    // 如果在加载过程中，资源已经被释放了，就不再设置了
-                    retSF.decRef();
-                    return;
-                }
+                    this.spriteFrame = retSF;
+                    this.releaseRes(this.resId, this.bundle);
+                    this.resId = pathLoading;
+                    this.bundle = bundleLoading;
+                };
 
-                this.spriteFrame = retSF;
-                this.releaseRes(lastResId, lastBundle);
+                setRes(this.resLoading, this.bundleLoading);
 
             },
             
