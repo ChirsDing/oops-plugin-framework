@@ -24,6 +24,11 @@ if (!VMEnv.editor) {
             resLoading: "",
             bundleLoading: "",
 
+            start() {
+                this.resId = "";
+                this.bundle = "";
+            },
+
             async setResID(path: string, bundle?:string) {
                 bundle = bundle ?? GameBundle.Bundle;
                 if (this.resLoading === path && this.bundleLoading === bundle) {
