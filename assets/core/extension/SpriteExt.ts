@@ -1,4 +1,3 @@
-import { GameBundle } from "@game/common/config/GameBundle";
 import { VMEnv } from "@oops/assets/libs/model-view/VMEnv";
 import { js, Sprite, SpriteFrame } from "cc";
 import { oops } from "../Oops";
@@ -25,12 +24,13 @@ if (!VMEnv.editor) {
             bundleLoading: "",
 
             start() {
-                this.resId = "";
-                this.bundle = "";
+                if ( this.resId.endsWith("/spriteFrame") && this.bundle && this.spriteFrame !== null) {
+                    this.spriteFrame.addRef();
+                }
             },
 
             async setResID(path: string, bundle?:string) {
-                bundle = bundle ?? GameBundle.Bundle;
+                bundle = bundle ?? "bundle";
                 if (this.resLoading === path && this.bundleLoading === bundle) {
                     return;
                 }

@@ -1,4 +1,4 @@
-import { Asset, AssetManager, Constructor, __private, assetManager, error, js, resources } from "cc";
+import { Asset, AssetManager, Constructor, __private, assetManager, error, js, resources, Prefab } from "cc";
 import { version } from "gltf-validator";
 
 export type ProgressCallback = __private._cocos_asset_asset_manager_deprecated__LoadProgressCallback;
@@ -262,6 +262,9 @@ oops.res.loadDir("game", onProgressCallback, onCompleteCallback);
         if (bundleName == null) bundleName = this.defaultBundleName;
 
         var bundle: AssetManager.Bundle = assetManager.getBundle(bundleName)!;
+        if (!bundle) {
+            return null;
+        }
         return bundle.get(path, type);
     }
 
@@ -305,15 +308,35 @@ oops.res.loadDir("game", onProgressCallback, onCompleteCallback);
     }
 
     private loadByBundleAndArgs<T extends Asset>(bundle: AssetManager.Bundle, args: ILoadResArgs<T>): void {
+        let complete = function (err: Error | null, assets: T | T[]) {
+            if (err) {
+                error(err);
+            }
+            // 引擎内部不会增加引用计数, 故在加载完成后手动增加引用计数，以便与释放资源时引用计数准确
+            if (assets instanceof Array) {
+                assets.forEach((asset) => {
+                    if (asset instanceof Prefab) {
+                        asset.addRef();
+                    }
+                });
+            } else {
+                if (assets instanceof Prefab) {
+                    assets.addRef();
+                }
+            }
+            if (args.onComplete) {
+                args.onComplete(err, assets);
+            }
+        }
         if (args.dir) {
-            bundle.loadDir(args.paths as string, args.type, args.onProgress, args.onComplete);
+            bundle.loadDir(args.paths as string, args.type, args.onProgress, complete);
         }
         else {
             if (typeof args.paths == 'string') {
-                bundle.load(args.paths, args.type, args.onProgress, args.onComplete);
+                bundle.load(args.paths, args.type, args.onProgress, complete);
             }
             else {
-                bundle.load(args.paths, args.type, args.onProgress, args.onComplete);
+                bundle.load(args.paths, args.type, args.onProgress, complete);
             }
         }
     }
