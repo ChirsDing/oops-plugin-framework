@@ -4,15 +4,14 @@
  * @LastEditors: dgflash
  * @LastEditTime: 2022-09-02 10:22:36
  */
-import { Component, _decorator } from 'cc';
-import { oops } from '../../Oops';
-import { EffectStatus, PlayType } from './AudioBase';
-import { AudioEffectSource } from './AudioEffectSource';
+import { _decorator, Component } from "cc";
+import { oops } from "../../Oops";
+import { EffectStatus, PlayType } from "./AudioBase";
+import { AudioEffectSource } from "./AudioEffectSource";
 const { ccclass, menu } = _decorator;
 
-
 /** 游戏音效 */
-@ccclass('AudioEffect')
+@ccclass("AudioEffect")
 export class AudioEffect extends Component {
     private _maxEffectPoolCount: number = 10;
 
@@ -59,10 +58,10 @@ export class AudioEffect extends Component {
             let comp = this._effectsPlaying[i];
             if (comp.status === EffectStatus.COMPLETE || comp.status === EffectStatus.DESTROY) {
                 this._effectsPlaying.splice(i, 1);
-                if(comp.status === EffectStatus.COMPLETE) {
+                if (comp.status === EffectStatus.COMPLETE) {
                     comp.status = EffectStatus.LOAD;
                     this._effectsPool.push(comp);
-                }else{
+                } else {
                     comp.release();
                     comp.destroy();
                 }
@@ -86,13 +85,13 @@ export class AudioEffect extends Component {
      * @param url           音效资源地址
      * @param playType      播放类型
      * @param priorityType  优先级类型
-     * @param polyphonyType 复音类型 
+     * @param polyphonyType 复音类型
      * @param bundle        资源包名
      * @param callback      资源加载完成并开始播放回调
      */
     load(url: string, playType = PlayType.ONESHOT, priorityType = 0, polyphonyType = 0, bundle?: string, callback?: Function) {
-        let comp : AudioEffectSource = this.getAudioEffectSource(url);
-        
+        let comp: AudioEffectSource = this.getAudioEffectSource(url);
+
         comp.onComplete = this.onCompComplete.bind(this);
         comp.polyphonyType = polyphonyType;
         comp.priorityType = priorityType;
@@ -101,24 +100,25 @@ export class AudioEffect extends Component {
         comp.fadeTime = 0;
         comp.mute = oops.audio.muteEffect;
 
-        this._effectsPlaying.push(comp);
-        
-        if (!this.addPolyphonyCount(comp))
-        {
+        if (!this.addPolyphonyCount(comp)) {
             if (!this._mapPolyphony.has(polyphonyType)) {
                 this._mapPolyphony.set(polyphonyType, comp);
-            }else{
+            } else {
                 comp.status = EffectStatus.DESTROY;
                 comp.release();
                 comp.destroy();
             }
             return;
         }
+
+        this._effectsPlaying.push(comp);
         comp.load(url, playType, bundle, () => {
-            if(comp.status === EffectStatus.ABORT){
+            if (comp.status === EffectStatus.ABORT) {
                 comp.status = EffectStatus.DESTROY;
+                this.reducePolyphonyCount(comp);
                 comp.release();
                 comp.destroy();
+                return;
             }
             this.playPriority(comp);
             callback && callback();
@@ -129,8 +129,8 @@ export class AudioEffect extends Component {
      * 获取url对应的音效组件
      * @param url           音效资源地址
      */
-    private getAudioEffectSource(url: string) : AudioEffectSource {
-        let comp : AudioEffectSource = null!;
+    private getAudioEffectSource(url: string): AudioEffectSource {
+        let comp: AudioEffectSource = null!;
         if (!this._removeing) {
             for (let i = 0; i < this._effectsPool.length; i++) {
                 if (this._effectsPool[i].url === url) {
@@ -171,22 +171,20 @@ export class AudioEffect extends Component {
             this._mapPolyphony.delete(comp.polyphonyType);
             this.load(tempComp.resUrl, tempComp.playType, tempComp.priorityType, tempComp.polyphonyType);
         }
-        if (!recycle){
+        if (!recycle) {
             comp.status = EffectStatus.DESTROY;
         }
-        
     }
 
     /**
      * 添加复音类型音效并发数量(默认0不做处理)
      * @param comp 当前播放音效组件
-     * @returns 
+     * @returns
      */
-    private addPolyphonyCount(comp: AudioEffectSource) : boolean {
+    private addPolyphonyCount(comp: AudioEffectSource): boolean {
         if (comp.polyphonyType <= 0) return true;
         let count = this._mapPolyphonyCount.get(comp.polyphonyType) || 0;
         count++;
-        
 
         if (count > oops.audio.maxConcurrent) {
             return false;
@@ -198,7 +196,7 @@ export class AudioEffect extends Component {
     /**
      * 减少复音类型音效并发数量(默认0不做处理)
      * @param comp 当前播放音效组件
-     * @returns 
+     * @returns
      */
     private reducePolyphonyCount(comp: AudioEffectSource) {
         if (comp.polyphonyType <= 0) return;
@@ -216,12 +214,11 @@ export class AudioEffect extends Component {
         if (comp.priorityType > this._maxPriorityType) {
             this._maxPriorityType = comp.priorityType;
             for (let i = this._effectsPlaying.length - 1; i >= 0; i--) {
-                
-                if (this._effectsPlaying[i] && this._effectsPlaying[i] !== comp) {
+                if (this._effectsPlaying[i]) {
                     this._effectsPlaying[i].vol = oops.audio.volumeAvoid;
                 }
             }
-        }else if (comp.priorityType < this._maxPriorityType){
+        } else if (comp.priorityType < this._maxPriorityType) {
             comp.vol = oops.audio.volumeAvoid;
         }
     }
@@ -230,26 +227,26 @@ export class AudioEffect extends Component {
      * 音效停止时优先级处理
      */
     private stopPriority(comp: AudioEffectSource) {
-        if (comp.priorityType <= 0 || comp.priorityType < this._maxPriorityType){
-            comp.vol = 1;    
+        if (comp.priorityType <= 0 || comp.priorityType < this._maxPriorityType) {
+            comp.vol = 1;
             return;
         }
-        
+
         let tempPriorityType = 0;
         let tempComps: AudioEffectSource[] = null!;
         for (let i = this._effectsPlaying.length - 1; i >= 0; i--) {
             let tempComp = this._effectsPlaying[i];
-            if(!tempComp || tempComp.status === EffectStatus.COMPLETE || tempComp.status === EffectStatus.DESTROY ) continue;
+            if (!tempComp || tempComp.status === EffectStatus.COMPLETE || tempComp.status === EffectStatus.DESTROY) continue;
 
             if (tempComp.priorityType > tempPriorityType) {
                 tempPriorityType = tempComp.priorityType;
-                if(tempPriorityType === this._maxPriorityType) break;
+                if (tempPriorityType === this._maxPriorityType) break;
 
                 tempComps = [tempComp];
-            }else if (tempComp.priorityType === tempPriorityType) {
-                if(!tempComps){
+            } else if (tempComp.priorityType === tempPriorityType) {
+                if (!tempComps) {
                     tempComps = [tempComp];
-                }else{
+                } else {
                     tempComps.push(tempComp);
                 }
             }
@@ -257,7 +254,7 @@ export class AudioEffect extends Component {
 
         if (tempPriorityType < this._maxPriorityType) {
             this._maxPriorityType = tempPriorityType;
-            if(!tempComps) {
+            if (!tempComps) {
                 this._maxPriorityType = 0;
                 return;
             }
@@ -272,7 +269,7 @@ export class AudioEffect extends Component {
      * 暂停所有音效
      */
     pauseAll() {
-        for (let i = this._effectsPlaying.length - 1; i >= 0 ; i--) {
+        for (let i = this._effectsPlaying.length - 1; i >= 0; i--) {
             let comp = this._effectsPlaying[i];
             comp.pause();
         }
@@ -282,7 +279,7 @@ export class AudioEffect extends Component {
      * 恢复所有音效
      */
     resumeAll() {
-        for (let i = this._effectsPlaying.length - 1; i >= 0 ; i--) {
+        for (let i = this._effectsPlaying.length - 1; i >= 0; i--) {
             let comp = this._effectsPlaying[i];
             comp.resume();
         }
@@ -293,9 +290,9 @@ export class AudioEffect extends Component {
      * @param url           音效资源地址
      */
     stopUrl(url: string) {
-        for (let i = this._effectsPlaying.length - 1; i >= 0 ; i--) {
+        for (let i = this._effectsPlaying.length - 1; i >= 0; i--) {
             let comp = this._effectsPlaying[i];
-            if (comp.url === url) {
+            if (comp.resUrl === url) {
                 comp.stop();
             }
         }
@@ -305,7 +302,7 @@ export class AudioEffect extends Component {
      * 停止所有音效
      */
     stopAll() {
-        for (let i = this._effectsPlaying.length - 1; i >= 0 ; i--) {
+        for (let i = this._effectsPlaying.length - 1; i >= 0; i--) {
             let comp = this._effectsPlaying[i];
             comp.stop();
         }
@@ -314,7 +311,7 @@ export class AudioEffect extends Component {
     /** 释放所有已使用过的音效资源 */
     releaseAll() {
         this._removeing = true;
-        for (let i = this._effectsPlaying.length - 1; i >= 0 ; i--) {
+        for (let i = this._effectsPlaying.length - 1; i >= 0; i--) {
             let comp = this._effectsPlaying[i];
             comp.onComplete = null;
             comp.release();
@@ -322,7 +319,7 @@ export class AudioEffect extends Component {
         }
         this._effectsPlaying = [];
 
-        for (let i = this._effectsPool.length - 1; i >= 0 ; i--) {
+        for (let i = this._effectsPool.length - 1; i >= 0; i--) {
             let comp = this._effectsPool[i];
             comp.release();
             comp.destroy();
@@ -339,14 +336,14 @@ export class AudioEffect extends Component {
      */
     release(url: string) {
         this._removeing = true;
-        for (let i = this._effectsPlaying.length - 1; i >= 0 ; i--) {
+        for (let i = this._effectsPlaying.length - 1; i >= 0; i--) {
             let comp = this._effectsPlaying[i];
             this.onCompComplete(comp, false);
             comp.release();
             comp.destroy();
         }
 
-        for (let i = this._effectsPool.length - 1; i >= 0 ; i--) {
+        for (let i = this._effectsPool.length - 1; i >= 0; i--) {
             let comp = this._effectsPool[i];
             this._effectsPool.splice(i, 1);
             comp.release();

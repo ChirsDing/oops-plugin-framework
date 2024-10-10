@@ -1,4 +1,4 @@
-import { error, instantiate, Node, Prefab, warn, Widget } from "cc";
+import { director, error, instantiate, math, Node, Prefab, Size, UITransform, Vec3, Widget } from "cc";
 import { oops } from "../../Oops";
 import { AnimationUtil } from "../../utils/AnimationUtil";
 import { UICallbacks, ViewParams } from "./Defines";
@@ -11,6 +11,8 @@ export class LayerUI extends Node {
     protected ui_nodes = new Map<string, ViewParams>();
     /** 被移除的界面缓存数据 */
     protected ui_cache = new Map<string, ViewParams>();
+
+    private _viewSize!: Size;
 
     /**
      * UI基础层，允许添加多个预制件节点
@@ -34,9 +36,9 @@ export class LayerUI extends Node {
      * @param callbacks  回调函数对象，可选
      * @returns ture为成功,false为失败
      */
-    add(config: UIConfig, params?: any, callbacks?: UICallbacks) {
+    add(config: UIConfig, params?: any, callbacks?: UICallbacks, touchPos?: Vec3) {
         if (this.ui_nodes.has(config.prefab)) {
-            warn(`路径为【${config.prefab}】的预制重复加载`);
+            this.readd(config, params, callbacks, touchPos);
             return;
         }
 
@@ -51,15 +53,17 @@ export class LayerUI extends Node {
         vp.params = params ?? {};
         vp.callbacks = callbacks ?? {};
         vp.valid = true;
+        vp.position = touchPos;
 
         this.load(vp, config.bundle)
     }
 
-    private readd(config: UIConfig, params?: any, callbacks?: UICallbacks) {
-        let vp = this.ui_cache.get(config.prefab)!;
+    private readd(config: UIConfig, params?: any, callbacks?: UICallbacks, touchPos?: Vec3) {
+        let vp = this.ui_nodes.get(config.prefab)!;
         vp.params = params ?? {};
         vp.callbacks = callbacks ?? {};
         vp.valid = true;
+        vp.position = touchPos;
 
         this.load(vp, config.bundle)
     }
@@ -70,10 +74,13 @@ export class LayerUI extends Node {
      * @param bundle     远程资源包名，如果为空就是默认本地资源包
      */
     protected load(vp: ViewParams, bundle?: string) {
+        this._curActiveVPList = [];
+
         if (vp && vp.node) {
-            this.reset(vp);
+            this.resetNode(vp);
+            vp.node.setSiblingIndex(-1);
             this.showUi(vp);
-            this.showAnim(vp, false);
+            this.showAnim(vp, true);
             this.setHideAnim(vp);
         }
         else {
@@ -82,17 +89,25 @@ export class LayerUI extends Node {
             oops.res.load(bundle, vp.config.prefab, (err: Error | null, res: Prefab) => {
                 if (err) {
                     this.ui_nodes.delete(vp.config.prefab);
+                    this._curActiveVPList = [];
                     error(`路径为【${vp.config.prefab}】的预制加载失败`);
                     return;
                 }
 
-                let childNode: Node = instantiate(res);
-                vp.node = childNode;
+                if (!vp.node) { // 防止同一帧重复加载
+                    // 实例化预制件, 并添加到节点上
+                    let childNode: Node = instantiate(res);
+                    vp.node = childNode;
 
-                let comp = childNode.addComponent(DelegateComponent);
-                comp.vp = vp;
-                comp.onHide = this.onHide.bind(this);
-                comp.onShow = this.onShow.bind(this);
+                    vp.node.setPosition(this.getShowPosition(vp));
+
+                    let comp = childNode.addComponent(DelegateComponent);
+                    comp.vp = vp;
+                    comp.onHide = this.onHide.bind(this);
+                    comp.onShow = this.onShow.bind(this);
+                } else {
+                    console.warn(`路径为【${vp.config.prefab}】的预制已经加载`);
+                }
 
                 this.showUi(vp);
                 this.showAnim(vp);
@@ -101,12 +116,71 @@ export class LayerUI extends Node {
         }
     }
 
-    reset(vp: ViewParams) {
-        if (vp.node) {
-            vp.node.opacity = 255;
-            vp.node.scale.set(1, 1);
-            vp.node.position.set(0, 0);
+    /**复用前需要重置一下 */
+    protected resetNode(vp: ViewParams) {
+        if (vp.node == null) return;
+        vp.node.active = true;
+        vp.node.opacity = 255;
+        vp.node.setScale(1, 1, 1);
+        vp.node.setPosition(this.getShowPosition(vp));
+    }
+
+    private _curActiveVPList:ViewParams[] = [];
+    /**获得内部所有窗口 按SiblingIndex 从大到小排 */
+    get curValidVPList(): ViewParams[]{
+        if(this._curActiveVPList.length === 0){
+            this.ui_nodes.forEach((vp: ViewParams, key: string) => {
+                if(vp.valid){
+                    this._curActiveVPList.push(vp);
+                }
+            });
+            this._curActiveVPList.sort((a,b)=>{return b.node?.getSiblingIndex() - a.node?.getSiblingIndex()});
         }
+        return this._curActiveVPList;
+    }
+
+    /**
+     * 获取屏幕大小
+     */
+    get HalfViewSize() : Size {
+        if (!this._viewSize) {
+            this._viewSize = this.uiTransform.contentSize.clone();
+            this._viewSize.width /= 2;
+            this._viewSize.height /= 2;
+        }
+        return this._viewSize;
+    }
+
+    /**
+     * 获取显示位置
+     * @param vp  视图参数
+     * @returns    显示位置
+     * @private
+     * @description 该方法会根据视图参数中的位置信息，根据屏幕大小及界面大小计算出最终显示位置
+     */
+    private getShowPosition(vp: ViewParams) : Vec3 {
+        let pos = new Vec3(0, 0, 0);
+        if (!vp.position) {
+            // do nothing
+        } else {
+            pos = this.uiTransform.convertToNodeSpaceAR(vp.position);
+            // 获取屏幕大小
+            let halfViewSize = this.HalfViewSize;
+            // 获取界面大小
+            let size = vp.node.getComponent(UITransform)!.contentSize;
+            let halfSizeWidth = size.width / 2;
+            let halfSizeHeight = size.height / 2;
+            // 根据vp中position计算显示位置，界面显示不超出屏幕, 优先显示在点击位置的右下角
+            if (pos.x <= 0) {
+                pos.x = math.clamp(pos.x + halfSizeWidth, halfSizeWidth - halfViewSize.width, halfViewSize.width - halfSizeWidth);
+            } else {
+                pos.x = math.clamp(pos.x - halfSizeWidth, halfSizeWidth - halfViewSize.width , halfViewSize.width - halfSizeWidth);
+            }
+            
+            pos.y = math.clamp(pos.y, halfSizeHeight - halfViewSize.height, halfViewSize.height - halfSizeHeight);
+        }
+
+        return pos;
     }
 
     /**
@@ -123,6 +197,7 @@ export class LayerUI extends Node {
      */
     protected onHide(vp: ViewParams) {
         this.ui_nodes.delete(vp.config.prefab);
+        this._curActiveVPList = [];
     }
 
     /**
@@ -143,11 +218,12 @@ export class LayerUI extends Node {
      * 显示界面动画
      * @param vp  视图参数
      */
-    protected async showAnim(vp: ViewParams, showAnim : boolean = true) {
+    protected async showAnim(vp: ViewParams, unshow: boolean = false) {
         let duration = 0.5;
-        let wait = false;
-        if ( showAnim && vp.config.showAnim && vp.config.showAnim > UIAnimationType.None) 
+        let delayShow = true;//标记是否需要延迟一帧执行showAnimEnd, 【因为如果不延迟，在没有打开动效的界面，onShow会比onStart先执行】
+        if ( !unshow && vp.config.showAnim && vp.config.showAnim > UIAnimationType.None) 
         {
+            delayShow = false;
             switch (vp.config.showAnim) {
                 case UIAnimationType.Show_Fade:
                     await AnimationUtil.fadeIn(vp.node, duration);
@@ -168,16 +244,22 @@ export class LayerUI extends Node {
                     await AnimationUtil.moveFromLeft(vp.node, screen.width, duration);
                     break;
                 default:
-                    wait = true;
+                    delayShow = true;
                     console.warn(`未知的界面动画类型：${vp.config.showAnim}`);
                     break;
             }
-        } else {
-            wait = true;
         }
-        // 触发窗口显示动画事件
         let comp = vp.node.getComponent(DelegateComponent)!;
-        wait ? comp.scheduleOnce(() => { comp.showAnimEnd();}, 0) : comp.showAnimEnd();
+        if(delayShow){
+            director.getScheduler().schedule(() => {
+                // 触发窗口显示动画事件
+                if (comp.isValid) {
+                    comp.showAnimEnd();
+                }
+            }, this, 0, 0, 0, false);
+        }else{
+            comp.showAnimEnd();
+        }
     }
 
     /**
@@ -235,13 +317,14 @@ export class LayerUI extends Node {
      * @param isDestroy    移除后是否释放
      */
     remove(prefabPath: string, isDestroy?: boolean): void {
+        this._curActiveVPList = [];
         var release = undefined;
         if (isDestroy !== undefined) release = isDestroy;
 
         // 界面移出舞台
         var vp = this.ui_nodes.get(prefabPath);
         if (vp) {
-            // 优先使用参数中控制的释放条件，如果未传递参数则用配置中的释放条件，默认不缓存关闭的界面
+           // 优先使用参数中控制的释放条件，如果未传递参数则用配置中的释放条件，默认不缓存关闭的界面
             if (release === undefined) {
                 release = vp.config.destroy !== undefined ? vp.config.destroy : true;
             }
@@ -265,6 +348,7 @@ export class LayerUI extends Node {
         let vp = this.ui_cache.get(prefabPath);
         if (vp) {
             this.ui_nodes.delete(vp.config.prefab);
+            this._curActiveVPList = [];
             this.ui_cache.delete(prefabPath);
             var childNode = vp.node;
             childNode.destroy();
@@ -295,6 +379,7 @@ export class LayerUI extends Node {
      * @param isDestroy  移除后是否释放
      */
     clear(isDestroy: boolean): void {
+        this._curActiveVPList = [];
         // 清除所有显示的界面
         this.ui_nodes.forEach((value: ViewParams, key: string) => {
             this.remove(value.config.prefab, isDestroy);

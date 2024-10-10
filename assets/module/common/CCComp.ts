@@ -43,7 +43,7 @@ export abstract class CCComp extends GameComponent implements ecs.IComp {
     ent!: ecs.Entity;
 
     abstract reset(): void;
-
+    
     onDestroy(): void {
         this.ent && this.ent.remove(this.constructor as any, false);
         super.onDestroy();

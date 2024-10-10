@@ -14,10 +14,10 @@
         "experimentalDecorators": true,
         "isolatedModules": true,
         "types": [
-            "./temp/declarations/cc.custom-macro",
-            "./temp/declarations/cc",
-            "./temp/declarations/jsb",
-            "./temp/declarations/cc.env"
+            "../../temp/declarations/cc.custom-macro",
+            "../../temp/declarations/cc",
+            "../../temp/declarations/jsb",
+            "../../temp/declarations/cc.env"
         ]
     },
     "exclude": [

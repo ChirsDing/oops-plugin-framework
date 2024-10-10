@@ -152,7 +152,6 @@ export class Vec3Util {
         if (pos1.x == pos2.x && pos1.y == pos2.y && pos1.z == pos2.z) {
             return true;
         }
-
         return false;
     }
 
@@ -221,6 +220,17 @@ export class Vec3Util {
         var lenght: number = to.length() * t + from.length() * (1 - t);
 
         return (dir.normalize()).multiplyScalar(lenght);
+    }
+
+    /**
+     * 获得两个向量夹角(角度，以x, y轴为基准)
+     * @param from  起点
+     * @param to    终点
+     * @returns     角度
+     */
+    static angleTo(from: Vec3, to: Vec3): number {
+        var angle: number = Math.atan2(to.y - from.y, to.x - from.x) * 180 / Math.PI;
+        return angle;
     }
 
     /**

@@ -4,7 +4,7 @@
  * @LastEditors: dgflash
  * @LastEditTime: 2023-01-09 11:52:38
  */
-import { Node } from "cc";
+import { Node, Vec3 } from "cc";
 import { UIConfig } from "./LayerManager";
 
 /*** 界面回调参数对象定义 */
@@ -45,6 +45,8 @@ export class ViewParams {
     valid: boolean = true;
     /** 界面根节点 */
     node: Node = null!;
+    /** 界面位置 */
+    position?: Vec3|null = null;
 }
 
 /** 弹框层回调对象定义（废弃） */

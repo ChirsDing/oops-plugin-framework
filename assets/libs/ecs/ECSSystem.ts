@@ -20,6 +20,9 @@ export abstract class ECSComblockSystem<E extends ECSEntity = ECSEntity> {
     private tmpExecute: ((dt: number) => void) | null = null;
     private execute!: (dt: number) => void;
 
+    speedScale: number = 1;
+    enabled: boolean = true;
+
     /** 构造函数 */
     constructor() {
         let hasOwnProperty = Object.hasOwnProperty;
@@ -73,24 +76,36 @@ export abstract class ECSComblockSystem<E extends ECSEntity = ECSEntity> {
      * @returns 
      */
     private updateOnce(dt: number) {
+        if (!this.enabled) { return; }
+
         if (this.group.count === 0) {
             return;
         }
 
-        this.dt = dt;
+        this.dt = dt * this.speedScale;
 
         // 处理刚进来的实体
         if (this.enteredEntities.size > 0) {
             var entities = this.enteredEntities.values();
             for (let entity of entities) {
-                (this as unknown as ecs.IEntityEnterSystem).entityEnter(entity);
+                try {
+                    (this as unknown as ecs.IEntityEnterSystem).entityEnter(entity);
+                }
+                catch (e) {
+                    console.error(e);
+                }
             }
             this.enteredEntities.clear();
         }
 
         // 只执行firstUpdate
         for (let entity of this.group.matchEntities) {
-            (this as unknown as ecs.ISystemFirstUpdate).firstUpdate(entity);
+            try {
+                (this as unknown as ecs.ISystemFirstUpdate).firstUpdate(entity);
+            }
+            catch (e) {
+                console.error(e);
+            }
         }
 
         this.execute = this.tmpExecute!;
@@ -104,9 +119,11 @@ export abstract class ECSComblockSystem<E extends ECSEntity = ECSEntity> {
      * @returns 
      */
     private execute0(dt: number): void {
+        if (!this.enabled) { return; }
+
         if (this.group.count === 0) return;
 
-        this.dt = dt;
+        this.dt = dt * this.speedScale;
 
         // 执行update
         if (this.hasUpdate) {
@@ -122,11 +139,18 @@ export abstract class ECSComblockSystem<E extends ECSEntity = ECSEntity> {
      * @returns 
      */
     private execute1(dt: number): void {
+        if (!this.enabled) { return; }
+
         if (this.removedEntities.size > 0) {
             if (this.hasEntityRemove) {
                 var entities = this.removedEntities.values();
                 for (let entity of entities) {
-                    (this as unknown as ecs.IEntityRemoveSystem).entityRemove(entity);
+                    try {
+                        (this as unknown as ecs.IEntityRemoveSystem).entityRemove(entity);
+                    }
+                    catch (e) {
+                        console.error(e);
+                    }
                 }
             }
             this.removedEntities.clear();
@@ -134,14 +158,19 @@ export abstract class ECSComblockSystem<E extends ECSEntity = ECSEntity> {
 
         if (this.group.count === 0) return;
 
-        this.dt = dt;
+        this.dt = dt * this.speedScale;
 
         // 处理刚进来的实体
         if (this.enteredEntities!.size > 0) {
             if (this.hasEntityEnter) {
                 var entities = this.enteredEntities!.values();
                 for (let entity of entities) {
-                    (this as unknown as ecs.IEntityEnterSystem).entityEnter(entity);
+                    try {
+                        (this as unknown as ecs.IEntityEnterSystem).entityEnter(entity);
+                    }
+                    catch (e) {
+                        console.error(e);
+                    }
                 }
             }
             this.enteredEntities!.clear();
@@ -203,6 +232,27 @@ export class ECSRootSystem {
 /** 系统组合器，用于将多个相同功能模块的系统逻辑上放在一起，系统也可以嵌套系统 */
 export class ECSSystem {
     private _comblockSystems: ECSComblockSystem[] = [];
+
+    /** system速度倍率 */
+    private _speedScale: number = 1;
+    set speedScale(value: number) {
+        this._speedScale = value;
+        this.comblockSystems.forEach(sys => {sys.speedScale = this._speedScale});
+    }
+    get speedScale(): number {
+        return this._speedScale;
+    }
+
+    /** system添加启用标记 */
+    private _enabled: boolean = true;
+    set enabled(value: boolean) {
+        this._enabled = value;
+        this.comblockSystems.forEach(sys => {sys.enabled = this._enabled});
+    }
+    get enabled(): boolean {
+        return this._enabled;
+    }
+
     get comblockSystems() {
         return this._comblockSystems;
     }

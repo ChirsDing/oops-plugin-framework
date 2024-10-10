@@ -97,15 +97,15 @@ export class ECSEntity {
     /**
      * 移除子实体
      * @param entity 被移除的实体对象
-     * @param isDestory 被移除的实体是否释放，默认为释放
+     * @param isDestroy 被移除的实体是否释放，默认为释放
      * @returns 
      */
-    removeChild(entity: ECSEntity, isDestory = true) {
+    removeChild(entity: ECSEntity, isDestroy = true) {
         if (this.children == null) return;
 
         this.children.delete(entity.eid);
-        if (isDestory) entity.destroy();
-
+        if (isDestroy) entity.destroy();
+        
         if (this.children.size == 0) {
             this._children = null;
         }

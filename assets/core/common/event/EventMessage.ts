@@ -23,5 +23,16 @@ export enum EventMessage {
     /** 游戏全屏事件 */
     GAME_FULL_SCREEN = "GAME_FULL_SCREEN",
     /** 游戏旋转屏幕事件 */
-    GAME_ORIENTATION = "GAME_ORIENTATION"
+    GAME_ORIENTATION = "GAME_ORIENTATION",
+
+    /**ui控制器显示 */
+    UI_CONTROLLER_SHOW = "UI_CONTROLLER_SHOW",
+    /**ui控制器隐藏 */
+    UI_CONTROLLER_HIDE = "UI_CONTROLLER_HIDE",
+    /**ui控制器销毁 */
+    UI_CONTROLLER_DESTROY = "UI_CONTROLLER_DESTROY",
+    /**ui控制器假隐藏 */
+    UI_CONTROLLER_OPENTEMPHIDE = "UI_CONTROLLER_OPENTEMPHIDE",
+    /**ui控制器取消假隐藏 */
+    UI_CONTROLLER_CANCELTEMPHIDE = "UI_CONTROLLER_CANCELTEMPHIDE",
 }

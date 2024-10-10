@@ -1,7 +1,7 @@
-import { Component, JsonAsset, _decorator } from 'cc';
+import { Component, JsonAsset, _decorator } from "cc";
 import AnimatorController from "./AnimatorController";
 import AnimatorState from "./AnimatorState";
-import { AnimatorStateLogic } from './AnimatorStateLogic';
+import { AnimatorStateLogic } from "./AnimatorStateLogic";
 
 const { ccclass, property, executionOrder, menu } = _decorator;
 
@@ -12,7 +12,7 @@ export interface AnimationPlayer {
     /** 设置动画播放结束的回调 */
     onFinishedCallback(target: AnimatorBase): void;
     /** 设置动画帧事件的回调 */
-    onFrameEventCallback(type: string, target: AnimatorBase): void
+    onFrameEventCallback(type: string, target: AnimatorBase): void;
     /** 播放动画 */
     playAnimation(animName: string, loop: boolean): void;
     /** 缩放动画播放速率 */
@@ -24,7 +24,7 @@ export interface AnimationPlayer {
  */
 @ccclass
 @executionOrder(-1000)
-@menu('animator/AnimatorBase')
+@menu("animator/AnimatorBase")
 export default class AnimatorBase extends Component {
     /** ---------- 后续扩展代码 开始 ---------- */
 
@@ -35,13 +35,13 @@ export default class AnimatorBase extends Component {
 
     /** ---------- 后续扩展代码 结束 ---------- */
 
-    @property({ type: JsonAsset, tooltip: '状态机json文件' })
+    @property({ type: JsonAsset, tooltip: "状态机json文件" })
     AssetRawUrl: JsonAsset = null!;
 
-    @property({ tooltip: '是否在start中自动启动状态机' })
+    @property({ tooltip: "是否在start中自动启动状态机" })
     PlayOnStart: boolean = true;
 
-    @property({ tooltip: '是否在update中自动触发状态机逻辑更新' })
+    @property({ tooltip: "是否在update中自动触发状态机逻辑更新" })
     AutoUpdate: boolean = true;
 
     /** 是否初始化 */
@@ -77,8 +77,7 @@ export default class AnimatorBase extends Component {
      * - animationPlayer 自定义动画控制
      * @virtual
      */
-    public onInit(...args: Array<Map<string, AnimatorStateLogic> | ((fromState: string, toState: string) => void) | AnimationPlayer>) {
-    }
+    public onInit(...args: Array<Map<string, AnimatorStateLogic> | ((fromState: string, toState: string) => void) | AnimationPlayer>) {}
 
     /**
      * 处理初始化参数
@@ -88,14 +87,12 @@ export default class AnimatorBase extends Component {
             if (!arg) {
                 return;
             }
-            if (typeof arg === 'function') {
+            if (typeof arg === "function") {
                 this._onStateChangeCall = arg;
-            }
-            else if (typeof arg === 'object') {
+            } else if (typeof arg === "object") {
                 if (arg instanceof Map) {
                     this._stateLogicMap = arg;
-                }
-                else {
+                } else {
                     this._animationPlayer = arg;
                 }
             }
@@ -156,24 +153,21 @@ export default class AnimatorBase extends Component {
      * @param animName 动画名
      * @param loop 是否循环播放
      */
-    protected playAnimation(animName: string, loop: boolean) {
-    }
+    protected playAnimation(animName: string, loop: boolean) {}
 
     /**
      * 缩放动画播放速率
      * @virtual
      * @param scale 缩放倍率
      */
-    protected scaleTime(scale: number) {
-    }
+    protected scaleTime(scale: number) {}
 
-    /** 
+    /**
      * 状态切换时的逻辑（状态机内部方法，不能由外部直接调用）
      */
     public onStateChange(fromState: AnimatorState, toState: AnimatorState) {
         this.playAnimation(toState.motion, toState.loop);
-
-        let fromStateName = fromState ? fromState.name : '';
+        let fromStateName = fromState ? fromState.name : "";
 
         if (this._stateLogicMap) {
             let fromLogic = this._stateLogicMap.get(fromStateName);
@@ -238,10 +232,10 @@ export default class AnimatorBase extends Component {
      * 无视条件直接跳转状态
      * @param 状态名
      */
-    public play(stateName: string) {
+    public play(stateName: string, bForce: boolean = false) {
         if (!this._hasInit) {
             return;
         }
-        this._ac.play(stateName);
+        this._ac.play(stateName, bForce);
     }
 }

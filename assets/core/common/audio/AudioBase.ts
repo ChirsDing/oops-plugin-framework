@@ -6,23 +6,21 @@
  * @description file description
  */
 
-
-
-import { AudioClip, AudioSource, _decorator, tween, error } from "cc";
+import { AudioClip, AudioSource, _decorator, error, tween } from "cc";
 import { oops } from "../../Oops";
 const { ccclass, menu } = _decorator;
 
 export enum PlayType {
     MUSIC = 1,
-    ONESHOT = 2
+    ONESHOT = 2,
 }
 
 export enum EffectStatus {
-    LOAD = 0,       // 加载中
-    START = 1,      // 播放中
-    COMPLETE = 2,   // 播放完成
-    ABORT = 3,      // 中断
-    DESTROY = 9,    // 待销毁
+    LOAD = 0, // 加载中
+    START = 1, // 播放中
+    COMPLETE = 2, // 播放完成
+    ABORT = 3, // 中止
+    DESTROY = 9, // 待销毁
 }
 
 /**
@@ -30,7 +28,7 @@ export enum EffectStatus {
  */
 
 /** 音频基类 */
-@ccclass('AudioBase')
+@ccclass("AudioBase")
 export class AudioBase extends AudioSource {
     /** 音效播放完成回调 */
     onComplete: Function | null = null;
@@ -39,17 +37,16 @@ export class AudioBase extends AudioSource {
     protected _progress: number = 0;
     protected _isPlay: boolean = false;
     protected _playType: PlayType = PlayType.MUSIC;
+    protected _status: EffectStatus = EffectStatus.LOAD;
     protected _fadeTime: number = 1.0;
 
-    protected _vol : number = 1;
+    protected _vol: number = 1;
     protected _mute: boolean = false;
     protected _baseVolume: number = 1;
-    protected _status : EffectStatus = EffectStatus.LOAD;
 
     /** 获取音乐播放进度 */
     get progress(): number {
-        if (this.duration > 0)
-            this._progress = this.currentTime / this.duration;
+        if (this.duration > 0) this._progress = this.currentTime / this.duration;
         return this._progress;
     }
 
@@ -130,7 +127,7 @@ export class AudioBase extends AudioSource {
                 if (err) {
                     this.release();
                     this.destroy();
-                    error(err);
+                    err && error(err);
                     return;
                 }
                 if (this._status !== EffectStatus.ABORT) {
@@ -139,9 +136,8 @@ export class AudioBase extends AudioSource {
                 }
                 callback && callback();
             });
-        }else{
+        } else {
             this.resetVolume();
-            console.info("load ", this.url, this.volume);
             this.playStart(this._url, this.clip!);
             callback && callback();
         }
@@ -150,16 +146,19 @@ export class AudioBase extends AudioSource {
     /**
      * 音效淡出并停止
      */
-    private fadeOutStop() : Promise<void> {
-        if (this._fadeTime > 0){
-            return new Promise<void>(resolve => {
+    private fadeOutStop(): Promise<void> {
+        if (this._fadeTime > 0) {
+            return new Promise<void>((resolve) => {
                 //@ts-ignore
-                tween(this).to(this._fadeTime / 2, { volume: 0 }).call(() => {
-                    this.stop();
-                    resolve();
-                }).start();
+                tween(this)
+                    .to(this._fadeTime / 2, { volume: 0 })
+                    .call(() => {
+                        this.stop();
+                        resolve();
+                    })
+                    .start();
             });
-        }else{
+        } else {
             this.stop();
             return Promise.resolve();
         }
@@ -168,17 +167,20 @@ export class AudioBase extends AudioSource {
     /**
      * 音效淡入并播放
      */
-    private fadeInPlay() : Promise<void> {
+    private fadeInPlay(): Promise<void> {
         if (this._fadeTime > 0) {
-            return new Promise<void>(resolve => {
+            return new Promise<void>((resolve) => {
                 this.volume = 0;
                 this.play();
                 //@ts-ignore
-                tween(this).to(this._fadeTime, { volume: this._baseVolume }).call(() => {
-                    resolve();
-                }).start();
+                tween(this)
+                    .to(this._fadeTime, { volume: this._baseVolume })
+                    .call(() => {
+                        resolve();
+                    })
+                    .start();
             });
-        }else{
+        } else {
             this.play();
             return Promise.resolve();
         }
@@ -192,9 +194,9 @@ export class AudioBase extends AudioSource {
      * 播放音效
      */
     protected async playStart(url: string, clip?: AudioClip) {
-        if (!clip || this._url === url && this._isPlay) {
+        if (!clip || (this._url === url && this._isPlay)) {
             // error("音效已经在播放中");
-            return
+            return;
         }
 
         if (this._playType === PlayType.ONESHOT) {
@@ -203,7 +205,7 @@ export class AudioBase extends AudioSource {
             this.clip = clip;
             this.onPlay();
             this.playOneShot(clip, this.volume);
-        }else{
+        } else {
             if (this.playing) {
                 await this.fadeOutStop();
             }
@@ -216,7 +218,6 @@ export class AudioBase extends AudioSource {
 
             this._url = url;
             this.clip = clip;
-            //this.onPlay();
 
             await this.fadeInPlay();
         }

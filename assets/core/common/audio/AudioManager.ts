@@ -18,12 +18,14 @@ export class AudioManager extends Component {
     music!: AudioMusic;
     effect!: AudioEffect;
 
-    showLog: boolean = true;
+    showLog: boolean = false;
     
     private _maxConcurrent: number = 7;
     private _volumeAvoid: number = 0.3;
     private _volume_music: number = 1;
     private _volume_effect: number = 1;
+    private _switch_music: boolean = true;
+    private _switch_effect: boolean = true;
     private _mute_music: boolean = false;
     private _mute_effect: boolean = false;
 
@@ -37,12 +39,33 @@ export class AudioManager extends Component {
 
     /**
      * 播放背景音乐
+     * @param url        资源地址
+     * @param callback   音乐播放完成事件
+     */
+    playMusic(url: string, callback?: Function) {
+        this.playMusicInternal(oops.res.defaultBundleName, url, 0, 0, false, callback);
+    }
+
+    playMusicByBundle(bundleName: string, url: string, callback?: Function) {
+        this.playMusicInternal(bundleName, url, 0, 0, false, callback);
+    }
+
+    /** 
+     * 循环播放背景音乐 
+     * @param url       资源地址
+     * @param loopStart 循环开始时间
+     * @param loopEnd   循环结束时间
+     */
+    playMusicLoop(url: string, loopStart: number = 0, loopEnd: number = 0, callback?: Function) {
+        this.playMusicInternal(oops.res.defaultBundleName, url, loopStart, loopEnd, true);
+    }
+
+    /**
+     * 循环播放背景音乐
      * @param bundleName 资源包名
      * @param url        资源地址
-     * @param [loop=true] 是否循环播放
-     * @param [loopStart=0] 循环开始时间
-     * @param [loopEnd=0] 循环结束时间
-     * @param [callback] 播放开始回调
+     * @param loopStart  循环开始时间
+     * @param loopEnd    循环结束时间
      * @example
      * ```typescript
      * oops.audio.playMusicLoopByBundle("audios", "nocturne", 15.580, 54.296);
@@ -51,15 +74,17 @@ export class AudioManager extends Component {
      * // 之后背景音乐将在这个区间内循环播放
      * // 调用 unsetMusicLoopInterval() 取消循环播放区间，背景音乐将完整循环播放
      */
-    playMusic(bundleName: string, url: string, loop: boolean = true, loopStart: number = 0, loopEnd: number = 0, callback?: Function) {
-        this.playMusicInternal(bundleName, url, loop, loopStart, loopEnd, callback);
+    playMusicLoopByBundle(bundleName: string, url: string, loopStart: number = 0, loopEnd: number = 0, callback?: Function) {
+        this.playMusicInternal(bundleName, url, loopStart, loopEnd, true, callback);
     }
 
-    private playMusicInternal(bundleName: string, url: string, loop: boolean = true, loopStart: number = 0, loopEnd: number = 0, callback?: Function) {
-        this.music.loop = loop;
-        this.music.loopStart = loopStart;
-        this.music.loopEnd = loopEnd;
-        this.music.load(url, PlayType.MUSIC, bundleName, callback);
+    private playMusicInternal(bundleName: string, url: string, loopStart: number = 0, loopEnd: number = 0, loop: boolean = false, callback?: Function) {
+        if (this._switch_music){
+            this.music.loop = loop;
+            this.music.loopStart = loopStart;
+            this.music.loopEnd = loopEnd;
+            this.music.load(url, PlayType.MUSIC, bundleName, callback);
+        }
     }
 
     /**
@@ -200,23 +225,77 @@ export class AudioManager extends Component {
         return this._maxConcurrent;
     }
 
+    /** 
+     * 获取背景音乐开关值 
+     */
+    get switchMusic(): boolean {
+        return this._switch_music;
+    }
+    /** 
+     * 设置背景音乐开关值
+     * @param value     开关值
+     */
+    set switchMusic(value: boolean) {
+        this._switch_music = value;
+
+        if (value == false) this.music.stop();
+    }
+
+    /**
+     * 播放音效
+     * @param url        资源地址
+     */
+    playEffect(url: string) {
+        if (this._switch_effect) {
+            this.playEffectByBundleWithPriority(oops.res.defaultBundleName, url, PlayType.ONESHOT);
+        }
+    }
+
+    /**
+     * 播放音效
+     * @param bundleName 资源包名
+     * @param url        资源地址
+     */
+    playEffectByBundle(bundleName: string, url: string) {
+        if (this._switch_effect) {
+            this.playEffectByBundleWithPriority(bundleName, url, PlayType.ONESHOT);
+        }
+    }
+
+    /**
+     * 播放语音
+     * @param url        资源地址
+     */
+    playVoice(url: string) {
+        if (this._switch_effect) {
+            this.playEffectByBundleWithPriority(oops.res.defaultBundleName, url, PlayType.MUSIC);
+        }
+    }
+
+    /**
+     * 播放语音
+     * @param bundleName 资源包名
+     * @param url        资源地址
+     */
+    playVoiceByBundle(bundleName: string, url: string) {
+        if (this._switch_effect) {
+            this.playEffectByBundleWithPriority(bundleName, url, PlayType.MUSIC);
+        }
+    }
+
     /**
      * 播放音效
      * @param bundleName    资源包名
      * @param url           资源地址
-     * @param [playType=PlayType.MUSIC] 播放类型
-     * @param [priorityType=0] 优先级类型
-     * @param [polyphonyType=0] 复音类型
-     * @example
-     * ```typescript
-     * oops.audio.playEffectByBundleWithPriority("audios", "click");
-     * ```
-     * // 播放 audios 包中的 click 音效
-     * // 优先级为 0，复音类型为 0
+     * @param playType      播放类型
+     * @param priorityType  优先级类型
+     * @param polyphonyType 复音类型
      */
-    playEffect(bundleName: string, url: string, playType: PlayType = PlayType.MUSIC, priorityType: number = 0, polyphonyType: number = 0) {
+    playEffectByBundleWithPriority(bundleName: string, url: string, playType: PlayType = PlayType.MUSIC, priorityType: number = 0, polyphonyType: number = 0) {
         if (url == null || url == "") return;
-        this.effect.load(url, playType, priorityType, polyphonyType, bundleName);
+        if (this._switch_effect) {
+            this.effect.load(url, playType, priorityType, polyphonyType, bundleName);
+        }
     }
 
     /**
@@ -224,7 +303,19 @@ export class AudioManager extends Component {
      * @param url        资源地址
      */
     stopEffect(url: string) {
-        this.effect.release(url);
+        if (this._switch_effect) {
+            this.effect.release(url);
+        }
+    }
+
+    /**
+     * 停止语音播放
+     * @param url        资源地址
+     */
+    stopVoice(url: string) {
+        if (this._switch_effect) {
+            this.effect.stopUrl(url);
+        }
     }
 
     /** 
@@ -241,6 +332,21 @@ export class AudioManager extends Component {
     set volumeEffect(value: number) {
         this._volume_effect = value;
         this.effect.setVolume();
+    }
+
+    /** 
+     * 获取音效开关值 
+     */
+    get switchEffect(): boolean {
+        return this._switch_effect;
+    }
+    /**
+     * 设置音效开关值
+     * @param value     音效开关值
+     */
+    set switchEffect(value: boolean) {
+        this._switch_effect = value;
+        if (value == false) this.effect.stopAll();
     }
 
     /** 恢复当前暂停的音乐与音效播放 */
@@ -271,10 +377,12 @@ export class AudioManager extends Component {
     save() {
         this.local_data.volume_music = this._volume_music;
         this.local_data.volume_effect = this._volume_effect;
+        this.local_data.switch_music = this._switch_music;
+        this.local_data.switch_effect = this._switch_effect;
         this.local_data.mute_music = this._mute_music;
         this.local_data.mute_effect = this._mute_effect;
 
-        oops.storage.set(LOCAL_STORE_KEY, this.local_data);
+        oops.storage.set(LOCAL_STORE_KEY, this.local_data, false);
     }
 
 
@@ -283,7 +391,7 @@ export class AudioManager extends Component {
         this.music = this.getComponent(AudioMusic) || this.addComponent(AudioMusic)!;
         this.effect = this.getComponent(AudioEffect) || this.addComponent(AudioEffect)!;
 
-        this.local_data = oops.storage.getJson(LOCAL_STORE_KEY);
+        this.local_data = oops.storage.getJson(LOCAL_STORE_KEY, null, false);
         if (this.local_data) {
             try {
                 this.setState();
@@ -298,6 +406,9 @@ export class AudioManager extends Component {
     }
 
     private setState() {
+        this._switch_music = this.local_data.switch_music;
+        this._switch_effect = this.local_data.switch_effect;
+
         this.volumeMusic = this.local_data.volume_music;
         this.volumeEffect = this.local_data.volume_effect;
         this.muteMusic = this.local_data.mute_music;
@@ -306,9 +417,11 @@ export class AudioManager extends Component {
 
     private setStateDefault() {
         this.local_data = {};
-        this._volume_music = 1;
-        this._volume_effect = 1;
-        this._mute_music = false;
-        this._mute_effect = false;
+        this.volumeMusic = 1;
+        this.volumeEffect = 1;
+        this._switch_music = true;
+        this._switch_effect = true;
+        this.muteMusic = false;
+        this.muteEffect = false;
     }
 }

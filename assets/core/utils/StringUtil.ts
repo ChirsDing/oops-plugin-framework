@@ -61,6 +61,29 @@ export class StringUtil {
         }
     }
 
+    static FormatNumberString(value: string): string{
+        value = value.toString();
+        var tmp = value.split(".");
+        var sec = [];
+        sec.push(Number(tmp[1] == null ? "0" : tmp[1]));
+        var start = 0;
+        while(tmp[0].length > 4){
+            start = -4;
+            sec.push(Number(tmp[0].slice(start)));
+            tmp[0] = tmp[0].substring(0, tmp[0].length - 4);
+        }
+        sec.push(Number(tmp[0]));
+        sec.reverse();
+        var suffix = ["", "万", "亿", "兆", "吉", "太", "拍", "艾", "泽", "尧"];
+        var ret: string;
+        if(sec.length <= 2 || sec[0] >= 10){
+            ret = sec[0] + suffix[sec.length - 2];
+        }else{
+            ret = (sec[0] * 10000 + sec[1]) + suffix[sec.length - 3];
+        }
+        return ret;
+    }
+
     /**
      * 时间格式化
      * @param date  时间对象
@@ -128,7 +151,17 @@ export class StringUtil {
         if (str == "") {
             return [];
         }
-        return str.split(";");
+        return str.split(';');
+    }
+
+    static stringSplit(str: string, spliter: string, limit?: number): string[] {
+        if (str === '') return [];
+        return str?.split(spliter, limit);
+    }
+
+    static numberSplit(str: string, spliter: string, limit?: number): number[] {
+        if (str === '') return [];
+        return str?.split(spliter, limit).map(Number);
     }
 
     /**
@@ -171,7 +204,7 @@ export class StringUtil {
 
     /**
      * 是否为空
-     * @param str 
+     * @param str
      */
     public static IsEmpty(str: string): boolean {
         if (str == null || str == undefined || str.length == 0) {
@@ -184,7 +217,7 @@ export class StringUtil {
      * 参数替换
      * @param  str
      * @param  rest
-     *  
+     *
      * @example
      *
      * var str:string = "here is some info '{0}' and {1}";

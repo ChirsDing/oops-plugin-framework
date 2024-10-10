@@ -54,7 +54,7 @@ export class Timer {
         if (this.step <= 0) return false;
 
         this._elapsedTime += dt;
-
+        
         if (this._elapsedTime >= this._step) {
             this._elapsedTime -= this._step;
             this.callback?.call(this);

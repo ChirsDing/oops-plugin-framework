@@ -127,4 +127,9 @@ export class MathUtil {
     static probability(value: number) {
         return Math.random() < value;
     }
+
+    /**判断两个小数是否相等 */
+    static isEqual(a: number, b: number, tolerance: number = 1e-5): boolean {
+        return Math.abs(a - b) <= tolerance;
+    }
 }

@@ -1,4 +1,4 @@
-import { sp, _decorator } from "cc";
+import { _decorator, sp } from "cc";
 import AnimatorSpineSecondary from "./AnimatorSpineSecondary";
 import AnimatorBase, { AnimationPlayer } from "./core/AnimatorBase";
 import { AnimatorStateLogic } from "./core/AnimatorStateLogic";
@@ -16,6 +16,8 @@ export default class AnimatorSpine extends AnimatorBase {
     protected _spine: sp.Skeleton = null!;
     /** 动画完成的回调 */
     protected _completeListenerMap: Map<(entry?: any) => void, any> = new Map();
+    /** 动画完成的单次回调 */
+    protected _completeListenerOnceMap: Map<(entry?: any) => void, any> = new Map();
     /** 次状态机注册的回调 */
     protected _secondaryListenerMap: Map<(entry?: any) => void, AnimatorSpineSecondary> = new Map();
 
@@ -76,6 +78,8 @@ export default class AnimatorSpine extends AnimatorBase {
         entry.trackIndex === 0 && this.onAnimFinished();
         this._completeListenerMap.forEach((target, cb) => { target ? cb.call(target, entry) : cb(entry); });
         this._secondaryListenerMap.forEach((target, cb) => { entry.trackIndex === target.TrackIndex && cb.call(target, entry); });
+        this._completeListenerOnceMap.forEach((target, cb) => { target ? cb.call(target, entry) : cb(entry); });
+        this._completeListenerOnceMap.clear()
     }
 
     /**
@@ -134,6 +138,18 @@ export default class AnimatorSpine extends AnimatorBase {
      * 清空动画完成的监听
      */
     public clearCompleteListener() {
-        this._completeListenerMap.clear;
+        this._completeListenerMap.clear();
+    }
+
+    /**
+     * 注册动画完成时的单次监听
+     * @param cb 回调
+     * @param target 调用回调的this对象
+     */
+    public addCompleteListenerOnce(cb: (entry?: any) => void, target: any = null) {
+        if (this._completeListenerOnceMap.has(cb)) {
+            return;
+        }
+        this._completeListenerOnceMap.set(cb, target);
     }
 }

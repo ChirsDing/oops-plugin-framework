@@ -86,27 +86,31 @@ export default class AnimatorController {
      * 无视条件直接跳转状态
      * @param 状态名
      */
-    public play(stateName: string) {
-        if (!this._states.has(stateName) || this._curState.name === stateName) {
+    public play(stateName: string, bForce: boolean = false) {
+        if (!this._states.has(stateName)) {
+            return;
+        }
+
+        if (!bForce && this._curState.name === stateName) {
             return;
         }
 
         // 重置动画完成标记
         this.animComplete = false;
-        this.changeState(stateName);
+        this.changeState(stateName, bForce);
     }
 
     /**
      * 切换动画状态
      */
-    public changeState(stateName: string) {
+    public changeState(stateName: string, bForce: boolean = false) {
         this._changeCount++;
         if (this._changeCount > 1000) {
             error('[AnimatorController.changeState] error: 状态切换递归调用超过1000次，transition设置可能出错!');
             return;
         }
 
-        if (this._states.has(stateName) && (this._curState === null || this._curState.name !== stateName)) {
+        if (this._states.has(stateName) && (this._curState === null || this._curState.name !== stateName || bForce)) {
             let oldState = this._curState;
             this._curState = this._states.get(stateName)!;
 
