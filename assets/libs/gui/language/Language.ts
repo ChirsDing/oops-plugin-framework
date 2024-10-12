@@ -1,3 +1,4 @@
+import { StringUtil } from "@oops/assets/core/utils/StringUtil";
 import { EDITOR } from "cc/env";
 import { EventDispatcher } from "../../../core/common/event/EventDispatcher";
 import { Logger } from "../../../core/common/log/Logger";
@@ -90,8 +91,12 @@ export class LanguageManager extends EventDispatcher {
      * @param labId 
      * @param arr 
      */
-    getLangByID(labId: string): string {
-        return LanguageData.getLangByID(labId);
+    getLangByID(labId: string, ...args: (string | number)[]):string {
+        let content = LanguageData.getLangByID(labId);
+        if (args.length > 0) {
+            content = StringUtil.substitute(content, ...args);
+        }
+        return content;
     }
 
     /**
