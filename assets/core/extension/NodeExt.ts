@@ -1,5 +1,4 @@
 import { Button, Canvas, Color, Component, EditBox, Graphics, Label, Layout, Mask, Node, PageView, ProgressBar, RichText, ScrollView, Size, Slider, Sprite, Toggle, UIOpacity, UIRenderer, UITransform, Widget, js, v3 } from "cc";
-import { EDITOR } from "cc/env";
 
 // ========= 扩展 cc 提示声明 =========
 
@@ -56,14 +55,12 @@ declare module "cc" {
         angle_y: number;
         /** 获取、设置节点的 Z 欧拉角 */
         angle_z: number;
-        /** script bind */
-        bind: boolean;
 
         getComponentInParent<T extends Component>(classConstructor: Constructor<T> | AbstractedConstructor<T>): T | null;
     }
 }
 
-if (!EDITOR) {
+// if (!VMEnv.editor) {
     //@ts-ignore
     if (!Node.prototype["$__definedProperties__"]) {
         //@ts-ignore
@@ -85,17 +82,22 @@ if (!EDITOR) {
             "uiToggle": Toggle,
             "uiWidget": Widget,
             "uiOpacity": UIOpacity,
-            "uITransform": UITransform,
+            "uiTransform": UITransform,
             "uiMask": Mask,
         };
 
         for (const key in componentMap) {
-            Object.defineProperty(Node.prototype, key, {
-                get: function () {
-                    return this.getComponent(componentMap[key]);
-                },
-                set: function (value) { }
-            });
+            (function(key) {
+                Object.defineProperty(Node.prototype, key, {
+                    get: function () {
+                        let self: Node = this;
+                        return self.getComponent(componentMap[key]);
+                    },
+                    set: function (value) {
+                        throw new Error('This property is read-only');
+                    }
+                });
+            })(key);
         }
 
         /** 获取、设置节点的 X 欧拉角 */
@@ -342,4 +344,4 @@ if (!EDITOR) {
             }
         });
     }
-}
+// }
