@@ -104,13 +104,17 @@ export class LayerPopUp extends LayerUI {
     }
 
     private onTouchEnd(event: EventTouch) {
-        if (event.target === this) {
-            this.ui_nodes.forEach(vp => {
-                // 关闭已显示的界面
-                if (vp.valid && vp.config.vacancy) {
-                    this.remove(vp.config.prefab, true);
-                }
-            });
+        if (event.target === this && this.ui_nodes.size > 0) {
+            let vp = this.ui_nodes[this.ui_nodes.size - 1];
+            if (vp && vp.config.vacancy) {
+                this.remove(vp.config.prefab, true);
+            }
+            // this.ui_nodes.forEach(vp => {
+            //     // 关闭已显示的界面
+            //     if (vp.valid && vp.config.vacancy) {
+            //         this.remove(vp.config.prefab, true);
+            //     }
+            // });
         }
     }
 
