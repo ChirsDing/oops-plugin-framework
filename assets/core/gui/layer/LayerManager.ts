@@ -432,8 +432,8 @@ export class LayerManager {
         root.addChild(this.dialog);
         root.addChild(this.system);
         root.addChild(this.notify);
-        root.addChild(this.guide);
         root.addChild(this.logicTop);
+        root.addChild(this.guide);
         root.addChild(this.top);
         root.addChild(this.gm);
     }

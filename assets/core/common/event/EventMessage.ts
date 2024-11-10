@@ -24,7 +24,19 @@ export enum EventMessage {
     GAME_FULL_SCREEN = "GAME_FULL_SCREEN",
     /** 游戏旋转屏幕事件 */
     GAME_ORIENTATION = "GAME_ORIENTATION",
+    /** GUI尺寸发生变化 */
+    GUI_RESIZE = "GUI_RESIZE",
 
+    /** 游戏服务器socket连接成功 */
+    GameServerConnected = "GameServerConnected",
+    /** 登陆成功 */
+    LoginSuccess = "LoginSuccess",
+    /** 重连失败 */
+    ReconnectFail = "ReconnectFail",
+    /** 弱网状态变更 */
+    NetLoadingStateChange = "NetLoadingStateChange",
+    /**lateUpdate */
+    TIME_TICK_LATEUPDATE = "TIME_TICK_LATEUPDATE",
     /**ui控制器显示 */
     UI_CONTROLLER_SHOW = "UI_CONTROLLER_SHOW",
     /**ui控制器隐藏 */

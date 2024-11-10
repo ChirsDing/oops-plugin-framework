@@ -24,7 +24,7 @@ export class LayerDialog extends LayerPopUp {
     /** 窗口调用参数队列 */
     private params: Array<DialogParam> = [];
 
-    add(config: UIConfig, params?: any, callbacks?: UICallbacks) {
+    add(config: UIConfig, params?: any, callbacks?: UICallbacks, touchPos?: Vec3) {
         // 控制同一时间只能显示一个模式窗口
         if (this.ui_nodes.size > 0) {
             this.params.push({
@@ -36,16 +36,17 @@ export class LayerDialog extends LayerPopUp {
         }
 
         this.black.enabled = true;
-        this.show(config, params, callbacks);
+        this.show(config, params, callbacks, touchPos);
     }
 
     /** 显示模式弹窗 */
-    private show(config: UIConfig, params?: any, callbacks?: UICallbacks): string {
+    private show(config: UIConfig, params?: any, callbacks?: UICallbacks, touchPos?: Vec3): string {
         var vp = this.ui_cache.get(config.prefab);
         if (vp == null) {
             vp = new ViewParams();
             vp.config = config
             vp.valid = true;
+            vp.position = touchPos;
         }
         this.ui_nodes.set(vp.config.prefab, vp);
 

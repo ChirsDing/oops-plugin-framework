@@ -5,6 +5,8 @@
  * @LastEditTime: 2023-01-19 14:52:40
  */
 import { Component, ResolutionPolicy, UITransform, _decorator, math, screen, view } from "cc";
+import { HTML5 } from "cc/env";
+import { EventMessage } from "../common/event/EventMessage";
 import { oops } from "../Oops";
 
 const { ccclass } = _decorator;
@@ -44,6 +46,16 @@ export class GUI extends Component {
 
     /** 游戏画布尺寸变化 */
     resize() {
+        if (HTML5) {
+            this.resizePWA()
+        } else {
+            this.resizeInternal()
+        }
+        oops.message.dispatchEvent(EventMessage.GUI_RESIZE);
+    }
+
+    /** 游戏画布尺寸变化--Game */
+    resizeInternal() {
         var dr;
         if (view.getDesignResolutionSize().width > view.getDesignResolutionSize().height) {
             dr = this.landscapeDrz;
@@ -73,6 +85,29 @@ export class GUI extends Component {
 
         // 通过设置设计分辨率和匹配模式来进行游戏画面的屏幕适配
         view.setDesignResolutionSize(finalW, finalH, ResolutionPolicy.UNKNOWN);
+        this.transform.width = finalW;
+        this.transform.height = finalH;
+
+        oops.log.logView(dr, "设计尺寸");
+        oops.log.logView(s, "屏幕尺寸");
+    }
+
+    /** 游戏画布尺寸变化-PWA */
+    resizePWA() {
+        var dr;
+        if (view.getDesignResolutionSize().width > view.getDesignResolutionSize().height) {
+            dr = this.landscapeDrz;
+        }
+        else {
+            dr = this.portraitDrz;
+        }
+        var s = screen.windowSize;
+        var finalW = dr.width;
+        var finalH = dr.height;
+
+        // 通过设置设计分辨率和匹配模式来进行游戏画面的屏幕适配
+        view.setDesignResolutionSize(finalW, finalH, new ResolutionPolicy(ResolutionPolicy.ContainerStrategy.PROPORTION_TO_FRAME, ResolutionPolicy.ContentStrategy.SHOW_ALL));
+        
         this.transform.width = finalW;
         this.transform.height = finalH;
 

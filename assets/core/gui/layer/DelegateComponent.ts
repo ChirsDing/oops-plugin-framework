@@ -4,16 +4,16 @@
  * @LastEditors: dgflash
  * @LastEditTime: 2023-01-09 11:55:03
  */
-import { Component, Node, _decorator } from "cc";
+import { Component, Director, Node, _decorator, director } from "cc";
+import { EDITOR } from "cc/env";
 import { oops } from "../../Oops";
+import { EventMessage } from "../../common/event/EventMessage";
 import { ViewParams } from "./Defines";
-import { director } from "cc";
-import { Director } from "cc";
 
 const { ccclass } = _decorator;
 
 /** 窗口事件触发组件 */
-@ccclass('DelegateComponent')
+@ccclass("DelegateComponent")
 export class DelegateComponent extends Component {
     /** 视图参数 */
     vp: ViewParams = null!;
@@ -36,6 +36,11 @@ export class DelegateComponent extends Component {
         this.applyComponentsFunction(this.node, "onShow", this.vp.params);
         // 界面显示舞台事件
         this.onShow && this.onShow();
+
+        if (EDITOR) {
+            console.log(`【界面管理】打开界面【${this.vp.config.prefab}】`);
+        }
+        oops.message.dispatchEvent(EventMessage.UI_CONTROLLER_SHOW, oops.gui.getUIID(this.vp.config), this.vp.config.prefab);
     }
 
     /** 删除节点，该方法只能调用一次，将会触发onBeforeRemoved回调 */
@@ -46,13 +51,10 @@ export class DelegateComponent extends Component {
 
             //  通知外部对象窗口组件上移除之前的事件（关闭窗口前的关闭动画处理）
             if (typeof this.vp.callbacks.onBeforeRemove === "function") {
-                this.vp.callbacks.onBeforeRemove(
-                    this.node,
-                    () => {
-                        this.removed(this.vp, isDestroy);
-                    });
-            }
-            else {
+                this.vp.callbacks.onBeforeRemove(this.node, () => {
+                    this.removed(this.vp, isDestroy);
+                });
+            } else {
                 this.removed(this.vp, isDestroy);
             }
         }
@@ -68,13 +70,15 @@ export class DelegateComponent extends Component {
 
         // 界面移除舞台事件
         this.onHide && this.onHide(vp);
+        oops.message.dispatchEvent(EventMessage.UI_CONTROLLER_HIDE, oops.gui.getUIID(this.vp.config));
 
         if (isDestroy) {
+            // let uiID = oops.gui.getUIID(this.vp.config);
+            oops.message.dispatchEvent(EventMessage.UI_CONTROLLER_DESTROY, this);
             // 释放界面显示对象
             this.node.destroy();
-
+            // 释放界面相关资源
             director.once(Director.EVENT_AFTER_UPDATE, () => {
-                // 释放界面相关资源
                 oops.res.release(vp.config.prefab);
             });
         }

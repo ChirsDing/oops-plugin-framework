@@ -1,7 +1,7 @@
 import { director, error, instantiate, math, Node, Prefab, Size, UITransform, Vec3, Widget } from "cc";
 import { oops } from "../../Oops";
 import { AnimationUtil } from "../../utils/AnimationUtil";
-import { UICallbacks, ViewParams } from "./Defines";
+import { UICallbacks, UIState, ViewParams } from "./Defines";
 import { DelegateComponent } from "./DelegateComponent";
 import { UIAnimationType, UIConfig } from "./LayerManager";
 
@@ -48,11 +48,12 @@ export class LayerUI extends Node {
             vp = new ViewParams();
             vp.config = config;
         }
+        vp.state = UIState.OPEN;
         this.ui_nodes.set(config.prefab, vp);
 
         vp.params = params ?? {};
         vp.callbacks = callbacks ?? {};
-        vp.valid = true;
+        //vp.valid = true;
         vp.position = touchPos;
 
         this.load(vp, config.bundle)
@@ -62,7 +63,7 @@ export class LayerUI extends Node {
         let vp = this.ui_nodes.get(config.prefab)!;
         vp.params = params ?? {};
         vp.callbacks = callbacks ?? {};
-        vp.valid = true;
+        //vp.valid = true;
         vp.position = touchPos;
 
         this.load(vp, config.bundle)
@@ -87,9 +88,9 @@ export class LayerUI extends Node {
             // 优先加载配置的指定资源包中资源，如果没配置则加载默认资源包资源
             bundle = bundle || oops.res.defaultBundleName;
             oops.res.load(bundle, vp.config.prefab, (err: Error | null, res: Prefab) => {
+                this._curActiveVPList = [];
                 if (err) {
                     this.ui_nodes.delete(vp.config.prefab);
-                    this._curActiveVPList = [];
                     error(`路径为【${vp.config.prefab}】的预制加载失败`);
                     return;
                 }
@@ -207,11 +208,17 @@ export class LayerUI extends Node {
     protected showUi(vp: ViewParams) {
         // 触发窗口添加事件
         let comp = vp.node.getComponent(DelegateComponent)!;
+        
+        if (vp.state === UIState.CLOSE || vp.state === UIState.DESTROY) {
+            oops.gui.removeByNode(vp.node, vp.state === UIState.DESTROY ? true : false);
+            return;
+        }
+        vp.state = UIState.LOADED;
         vp.node.parent = this;
-        comp.add();
-
         // 标记界面为使用状态
         vp.valid = true;
+        comp.add();
+
     }
 
     /**
@@ -324,6 +331,10 @@ export class LayerUI extends Node {
         // 界面移出舞台
         var vp = this.ui_nodes.get(prefabPath);
         if (vp) {
+            vp.state = isDestroy ? UIState.DESTROY : UIState.CLOSE;
+            if (!vp.valid) {
+                return;
+            }
            // 优先使用参数中控制的释放条件，如果未传递参数则用配置中的释放条件，默认不缓存关闭的界面
             if (release === undefined) {
                 release = vp.config.destroy !== undefined ? vp.config.destroy : true;

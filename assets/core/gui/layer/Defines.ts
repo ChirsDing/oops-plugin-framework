@@ -33,6 +33,18 @@ export interface UICallbacks {
     onBeforeRemove?: (node: Node, next: Function) => void
 }
 
+export enum UIState {
+    NULL = 0,
+    /** 界面打开 */
+    OPEN = 1,
+    /** 界面加载完成 */
+    LOADED = 2,
+    /** 界面关闭 */
+    CLOSE = 3,
+    /** 界面销毁 */
+    DESTROY = 4
+}
+
 /** 本类型仅供gui模块内部使用，请勿在功能逻辑中使用 */
 export class ViewParams {
     /** 界面配置 */
@@ -42,11 +54,13 @@ export class ViewParams {
     /** 窗口事件 */
     callbacks: UICallbacks = null!;
     /** 是否在使用状态 */
-    valid: boolean = true;
+    valid: boolean = false;
     /** 界面根节点 */
     node: Node = null!;
     /** 界面位置 */
     position?: Vec3|null = null;
+    /** 界面打开状态 */
+    state: UIState = UIState.NULL;
 }
 
 /** 弹框层回调对象定义（废弃） */

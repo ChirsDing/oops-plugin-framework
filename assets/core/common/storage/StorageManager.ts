@@ -32,10 +32,11 @@ export class StorageManager {
      * 存储本地数据
      * @param key 存储key
      * @param value 存储值
+     * @param isPlayer 是否是玩家数据
      * @returns 
      */
-    set(key: string, value: any) {
-        var keywords = this.getKey(key);
+    set(key: string, value: any, isPlayer: boolean = true) {
+        var keywords = this.getKey(key, isPlayer);
 
         if (null == key) {
             console.error("存储的key不能为空");
@@ -76,15 +77,16 @@ export class StorageManager {
      * 获取指定关键字的数据
      * @param key          获取的关键字
      * @param defaultValue 获取的默认值
+     * @param isPlayer     是否是玩家数据
      * @returns 
      */
-    get(key: string, defaultValue: any = ""): string {
+    get(key: string, defaultValue: any = "", isPlayer: boolean = true): string {
         if (null == key) {
             console.error("存储的key不能为空");
             return null!;
         }
 
-        key = this.getKey(key);
+        key = this.getKey(key, isPlayer);
 
         if (this.encrypted) {
             key = EncryptUtil.md5(key);
@@ -102,8 +104,8 @@ export class StorageManager {
     }
 
     /** 获取指定关键字的数值 */
-    getNumber(key: string, defaultValue: number = 0): number {
-        var r = this.get(key);
+    getNumber(key: string, defaultValue: number = 0, isPlayer: boolean = true): number {
+        var r = this.get(key, isPlayer);
         if (r == "0") {
             return Number(r);
         }
@@ -111,14 +113,17 @@ export class StorageManager {
     }
 
     /** 获取指定关键字的布尔值 */
-    getBoolean(key: string): boolean {
-        var r = this.get(key);
-        return Boolean(r) || false;
+    getBoolean(key: string, defaultValue: boolean = true, isPlayer: boolean = true): boolean {
+        var r = this.get(key, '0', isPlayer);
+        if (r == "0" || r == "") {
+            return defaultValue;
+        }
+        return r.toLowerCase() === 'true';
     }
 
     /** 获取指定关键字的JSON对象 */
-    getJson(key: string, defaultValue?: any): any {
-        var r = this.get(key);
+    getJson(key: string, defaultValue?: any, isPlayer: boolean = true): any {
+        var r = this.get(key, isPlayer);
         return (r && JSON.parse(r)) || defaultValue;
     }
 
@@ -147,8 +152,8 @@ export class StorageManager {
     }
 
     /** 获取数据分组关键字 */
-    private getKey(key: string): string {
-        if (this._id == null || this._id == "") {
+    private getKey(key: string, isPlayer : boolean = true): string {
+        if (this._id == null || this._id == "" || !isPlayer) {
             return key;
         }
         return `${this._id}_${key}`;

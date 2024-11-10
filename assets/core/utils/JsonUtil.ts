@@ -48,18 +48,62 @@ export class JsonUtil {
         }
     }
 
+    static loadByBundle(bundleName: string, path: string, name: string, callback: Function): void {
+        if (data.has(name))
+            callback(data.get(name));
+        else {
+            var url = path + name;
+            oops.res.load(bundleName, url, JsonAsset, (err: Error | null, content: JsonAsset) => {
+                if (err) {
+                    console.warn(err.message);
+                    callback(null);
+                }
+                else {
+                    data.set(name, content.json);
+                    callback(content.json);
+                }
+            });
+        }
+    }
+
     /**
      * 异步加载Json数据表
      * @param name 资源名
      */
-    static loadAsync(name: string, bundle: string = oops.res.defaultBundleName): Promise<any> {
+    static loadAsync(name: string, unCache: boolean = false) {
         return new Promise((resolve, reject) => {
             if (data.has(name)) {
                 resolve(data.get(name))
             }
             else {
                 var url = path + name;
-                oops.res.load(bundle, url, JsonAsset, (err: Error | null, content: JsonAsset) => {
+                oops.res.load(url, JsonAsset, (err: Error | null, content: JsonAsset) => {
+                    if (err) {
+                        console.warn(err.message);
+                        resolve(null);
+                    }
+                    else {
+                        if (unCache) {
+                            resolve(content.json);
+                        }
+                        else {
+                            data.set(name, content.json);
+                            resolve(content.json);
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    static loadAsyncByBundle(bundleName: string, path: string, name: string) {
+        return new Promise((resolve, reject) => {
+            if (data.has(name)) {
+                resolve(data.get(name))
+            }
+            else {
+                var url = path + name;
+                oops.res.load(bundleName, url, JsonAsset, (err: Error | null, content: JsonAsset) => {
                     if (err) {
                         console.warn(err.message);
                         resolve(null);
@@ -81,5 +125,11 @@ export class JsonUtil {
         var url = path + name;
         data.delete(name);
         oops.res.release(url);
+    }
+
+    static releaseByBundle(bundleName: string, path: string, name: string) {
+        var url = path + name;
+        data.delete(name);
+        oops.res.release(url, bundleName);
     }
 }

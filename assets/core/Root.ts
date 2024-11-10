@@ -4,7 +4,7 @@
  * @LastEditors: dgflash
  * @LastEditTime: 2023-08-28 10:02:57
  */
-import { Component, Game, JsonAsset, Node, _decorator, director, game, screen, sys } from "cc";
+import { Component, Game, JsonAsset, Node, Settings, _decorator, director, game, screen, settings, sys } from "cc";
 import { LanguageManager } from "../libs/gui/language/Language";
 import { GameConfig } from "../module/config/GameConfig";
 import { GameQueryConfig } from "../module/config/GameQueryConfig";
@@ -15,8 +15,6 @@ import { TimerManager } from "./common/timer/TimerManager";
 import { GameManager } from "./game/GameManager";
 import { GUI } from "./gui/GUI";
 import { LayerManager } from "./gui/layer/LayerManager";
-import { settings } from "cc";
-import { Settings } from "cc";
 
 const { property } = _decorator;
 
@@ -39,7 +37,7 @@ export class Root extends Component {
     gui: Node = null!;
 
     /** 持久根节点 */
-    private persistRootNode: Node = null!
+    protected persistRootNode: Node = null!
 
     onLoad() {
         if (!isInited) {
@@ -47,23 +45,32 @@ export class Root extends Component {
 
             console.log(`Oops Framework v${version}`);
             this.enabled = false;
-
-            let config_name = "config";
-            oops.res.load(config_name, JsonAsset, () => {
-                var config = oops.res.get(config_name);
-                // oops.config.btc = new BuildTimeConstants();
-                oops.config.query = new GameQueryConfig();
-                oops.config.game = new GameConfig(config);
-                oops.http.server = oops.config.game.httpServer;                                      // Http 服务器地址
-                oops.http.timeout = oops.config.game.httpTimeout;                                    // Http 请求超时时间
-                oops.storage.init(oops.config.game.localDataKey, oops.config.game.localDataIv);      // 初始化本地存储加密
-                game.frameRate = oops.config.game.frameRate;                                         // 初始化每秒传输帧数
-
-                this.enabled = true;
-                this.init();
-                this.run();
-            });
+            this.loadConfig();
         }
+    }
+
+    private loadConfig() {
+        const config_name = "config";
+        oops.res.load(config_name, JsonAsset, () => {
+            var config = oops.res.get(config_name);
+            if (config == null) {
+                this.loadConfig();
+                return;
+            }
+            // oops.config.btc = new BuildTimeConstants();
+            oops.config.query = new GameQueryConfig();
+            oops.config.game = new GameConfig(config);
+            oops.http.server = oops.config.game.httpServer;                                      // Http 服务器地址
+            oops.http.timeout = oops.config.game.httpTimeout;                                    // Http 请求超时时间
+            oops.storage.init(oops.config.game.localDataKey, oops.config.game.localDataIv);      // 初始化本地存储加密
+            game.frameRate = oops.config.game.frameRate;                                         // 初始化每秒传输帧数
+
+            this.enabled = true;
+            this.init();
+            this.run();
+
+            oops.res.release(config_name);
+        });
     }
 
     update(dt: number) {
@@ -129,7 +136,7 @@ export class Root extends Component {
     }
 
     private setRemoteBundle() {
-        oops.res.remoteBundles = settings.querySettings(Settings.Category.ASSETS, "remoteBundles"); // 远程资源包
+        oops.res.remoteBundle = settings.querySettings(Settings.Category.ASSETS, 'remoteBundles')!;
     }
 
     private onShow() {

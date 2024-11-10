@@ -4,7 +4,7 @@
  * @LastEditTime: 2022-09-02 13:44:28
  */
 
-import { BlockInputEvents, EventTouch, Layers, Node } from "cc";
+import { BlockInputEvents, Button, EventTouch, Layers, Node } from "cc";
 import { ViewUtil } from "../../utils/ViewUtil";
 import { ViewParams } from "./Defines";
 import { UIConfig } from "./LayerManager";
@@ -18,6 +18,7 @@ export class LayerPopUp extends LayerUI {
     protected black!: BlockInputEvents;
     /** 半透明遮罩资源 */
     protected mask!: Node;
+    protected closeTip!: Node | null;
 
     constructor(name: string) {
         super(name);
@@ -69,6 +70,11 @@ export class LayerPopUp extends LayerUI {
 
         if (flag) {
             this.mask.parent = null;
+            if (flag && this.mask.hasEventListener(Button.EventType.CLICK, this.onTouchEnd, this)) {
+                this.mask.off(Button.EventType.CLICK, this.onTouchEnd, this);
+            }
+        }else{
+            this.resetMaskSiblingIndex();
         }
     }
 
@@ -81,11 +87,34 @@ export class LayerPopUp extends LayerUI {
         // 背景半透明遮罩
         if (this.mask == null) {
             this.mask = ViewUtil.createPrefabNode(Mask);
+            if (this.mask) {
+                this.closeTip = this.mask.getChildByName('lbCloseTip');
+            }
         }
         if (config.mask) {
             this.mask.parent = this;
-            this.mask.setSiblingIndex(0);
+            if (!this.mask.hasEventListener(Button.EventType.CLICK, this.onTouchEnd, this)) {
+                this.mask.on(Button.EventType.CLICK, this.onTouchEnd, this);
+            }
+            this.resetMaskSiblingIndex();
+
+            if (this.closeTip) {
+                this.closeTip.active = config.vacancy?true:false;
+            }
         }
+    }
+
+    protected resetMaskSiblingIndex(){
+        let idx = 0;
+        let popList = Array.from(this.ui_nodes.values());
+        for(let i = popList.length-1; i > 0; i--){
+            const vp = popList[i];
+            if(vp.config.mask){
+                idx = i;
+                break;
+            }
+        }
+        this.mask.setSiblingIndex(idx);
     }
 
     /** 关闭触摸非窗口区域关闭 */
@@ -104,24 +133,33 @@ export class LayerPopUp extends LayerUI {
     }
 
     private onTouchEnd(event: EventTouch) {
-        if (event.target === this && this.ui_nodes.size > 0) {
-            let vp = this.ui_nodes[this.ui_nodes.size - 1];
-            if (vp && vp.config.vacancy) {
+        if (event.target === this || event.target === this.mask) {
+            event.propagationStopped = true;
+            //每次只关一个界面
+            let popList = Array.from(this.ui_nodes.values());
+            let vp = popList[popList.length - 1];
+            if (vp.config.vacancy) {
                 this.remove(vp.config.prefab, true);
             }
-            // this.ui_nodes.forEach(vp => {
+            // for (let index = popList.length -1; index >= 0; index--) {
+            //     const vp = popList[index];
             //     // 关闭已显示的界面
             //     if (vp.valid && vp.config.vacancy) {
             //         this.remove(vp.config.prefab, true);
+            //         break;
             //     }
-            // });
+            //     if (vp.config.mask) {
+            //         break;
+            //     }
+            // }
         }
     }
 
     clear(isDestroy: boolean) {
         super.clear(isDestroy)
         this.black.enabled = false;
-        this.active = false;
+        // 处理 active 为 false 之后不再设置为 true 问题，分析下来没有必要设置为 false
+        // this.active = false;
         this.closeVacancyRemove();
         this.closeMask();
     }

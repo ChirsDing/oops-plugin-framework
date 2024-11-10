@@ -64,11 +64,12 @@ export class LayerUtil {
         });
     }
 
-    static setNodeLayerNumber(layer: number, node: Node) {
+    static setNodeLayerNumber(layer: number, node: Node): void {
         node.layer = layer;
         node.children.forEach(n => {
+            n.layer = layer;
             LayerUtil.setNodeLayerNumber(layer, n);
-        })
+        });
     }
 }
 
