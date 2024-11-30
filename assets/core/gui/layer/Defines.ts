@@ -42,7 +42,9 @@ export enum UIState {
     /** 界面关闭 */
     CLOSE = 3,
     /** 界面销毁 */
-    DESTROY = 4
+    DESTROY = 4,
+    /** 界面隐藏 */
+    HIDED = 5,
 }
 
 /** 本类型仅供gui模块内部使用，请勿在功能逻辑中使用 */

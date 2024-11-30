@@ -161,7 +161,7 @@ export class MessageManager {
         let _listener: any = ($event: string, ...$args: any) => {
             this.off(event, _listener, object);
             _listener = null;
-            listener.call(object, $event, $args);
+            listener.call(object, $event, ...$args);
         }
         this.on(event, _listener, object);
     }

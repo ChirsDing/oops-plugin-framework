@@ -72,7 +72,7 @@ var serverUrl = "http://192.168.1.8:8080/";         // 服务器地址
 var md5 = "8e5c0";                                  // Cocos Creator 构建后的MD5字符
 await oops.res.loadBundle(serverUrl,md5);
      */
-    loadBundle(url: string, v?: string) {
+    loadBundle(url: string, v?: string) : Promise<AssetManager.Bundle> {
         return new Promise<AssetManager.Bundle>((resolve, reject) => {
             assetManager.loadBundle(url, { version: v }, (err, bundle: AssetManager.Bundle) => {
                 if (err) {

@@ -115,7 +115,14 @@ export class ViewUtil {
      */
     static createPrefabNodeAsync(bundle: string, path: string): Promise<Node> {
         return new Promise(async (resolve, reject) => {
-            oops.res.load(bundle, path, Prefab, (err: Error | null, content: Prefab) => {
+            let prefab = oops.res.get(path, Prefab, bundle) as Prefab;
+            if (prefab) {
+                prefab.addRef();
+                var node = this.createPrefabNode(path, bundleName);
+                resolve(node);
+                return;
+            };
+            oops.res.load(bundleName, path, Prefab, (err: Error | null, content: Prefab) => {
                 if (err) {
                     console.error(`名为【${path}】的资源加载失败`);
                     return;

@@ -61,11 +61,13 @@ export class LayerUI extends Node {
 
     private readd(config: UIConfig, params?: any, callbacks?: UICallbacks, touchPos?: Vec3) {
         let vp = this.ui_nodes.get(config.prefab)!;
+        this.ui_nodes.delete(config.prefab);
+
         vp.params = params ?? {};
         vp.callbacks = callbacks ?? {};
         //vp.valid = true;
         vp.position = touchPos;
-
+        this.ui_nodes.set(config.prefab, vp);
         this.load(vp, config.bundle)
     }
 
@@ -131,7 +133,7 @@ export class LayerUI extends Node {
     get curValidVPList(): ViewParams[]{
         if(this._curActiveVPList.length === 0){
             this.ui_nodes.forEach((vp: ViewParams, key: string) => {
-                if(vp.valid){
+                if(vp.state != UIState.CLOSE && vp.state != UIState.DESTROY){
                     this._curActiveVPList.push(vp);
                 }
             });
@@ -211,6 +213,7 @@ export class LayerUI extends Node {
         
         if (vp.state === UIState.CLOSE || vp.state === UIState.DESTROY) {
             oops.gui.removeByNode(vp.node, vp.state === UIState.DESTROY ? true : false);
+            this.ui_nodes.delete(vp.config.prefab);
             return;
         }
         vp.state = UIState.LOADED;

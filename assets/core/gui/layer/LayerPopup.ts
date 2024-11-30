@@ -6,7 +6,7 @@
 
 import { BlockInputEvents, Button, EventTouch, Layers, Node } from "cc";
 import { ViewUtil } from "../../utils/ViewUtil";
-import { ViewParams } from "./Defines";
+import { UIState, ViewParams } from "./Defines";
 import { UIConfig } from "./LayerManager";
 import { LayerUI } from "./LayerUI";
 
@@ -34,11 +34,13 @@ export class LayerPopUp extends LayerUI {
     protected showUi(vp: ViewParams) {
         super.showUi(vp);
 
-        // 界面加载完成显示时，启动触摸非窗口区域关闭
-        this.openVacancyRemove(vp.config);
+        if (vp.valid) {
+            // 界面加载完成显示时，启动触摸非窗口区域关闭
+            this.openVacancyRemove(vp.config);
 
-        // 界面加载完成显示时，层级事件阻挡
-        this.black.enabled = true;
+            // 界面加载完成显示时，层级事件阻挡
+            this.black.enabled = true;
+        }
     }
 
     protected onHide(vp: ViewParams) {
@@ -51,18 +53,21 @@ export class LayerPopUp extends LayerUI {
     /** 设置触摸事件阻挡 */
     protected setBlackDisable() {
         // 所有弹窗关闭后，关闭事件阻挡功能
-        if (this.ui_nodes.size == 0) {
-            this.black.enabled = false;
-        }
+        this.black.enabled = this.getActiveUINodes().length > 0;
+
         this.closeVacancyRemove();
         this.closeMask();
     }
 
     /** 关闭遮罩 */
     protected closeMask() {
-        var flag = true;
-        for (var value of this.ui_nodes.values()) {
-            if (value.config.mask) {
+        if (!this.mask) {
+            return;
+        }
+        let flag = true;
+        for (let index = 0; index < this.getActiveUINodes().length; index++) {
+            const value = this.getActiveUINodes()[index];
+            if (value.valid && value.config.mask) {
                 flag = false;
                 break;
             }
@@ -70,10 +75,10 @@ export class LayerPopUp extends LayerUI {
 
         if (flag) {
             this.mask.parent = null;
-            if (flag && this.mask.hasEventListener(Button.EventType.CLICK, this.onTouchEnd, this)) {
+            if (this.mask.hasEventListener(Button.EventType.CLICK, this.onTouchEnd, this)) {
                 this.mask.off(Button.EventType.CLICK, this.onTouchEnd, this);
             }
-        }else{
+        } else {
             this.resetMaskSiblingIndex();
         }
     }
@@ -99,17 +104,17 @@ export class LayerPopUp extends LayerUI {
             this.resetMaskSiblingIndex();
 
             if (this.closeTip) {
-                this.closeTip.active = config.vacancy?true:false;
+                this.closeTip.active = config.vacancy ? true : false;
             }
         }
     }
 
-    protected resetMaskSiblingIndex(){
+    protected resetMaskSiblingIndex() {
         let idx = 0;
-        let popList = Array.from(this.ui_nodes.values());
-        for(let i = popList.length-1; i > 0; i--){
+        let popList = this.getActiveUINodes();
+        for (let i = popList.length - 1; i > 0; i--) {
             const vp = popList[i];
-            if(vp.config.mask){
+            if (vp.config.mask) {
                 idx = i;
                 break;
             }
@@ -119,9 +124,10 @@ export class LayerPopUp extends LayerUI {
 
     /** 关闭触摸非窗口区域关闭 */
     protected closeVacancyRemove() {
-        var flag = true;
-        for (var value of this.ui_nodes.values()) {
-            if (value.config.vacancy) {
+        let flag = true;
+        for (let index = 0; index < this.getActiveUINodes().length; index++) {
+            const value = this.getActiveUINodes()[index];
+            if (value.valid && value.config.vacancy) {
                 flag = false;
                 break;
             }
@@ -136,23 +142,26 @@ export class LayerPopUp extends LayerUI {
         if (event.target === this || event.target === this.mask) {
             event.propagationStopped = true;
             //每次只关一个界面
-            let popList = Array.from(this.ui_nodes.values());
+            let popList = this.getActiveUINodes();
             let vp = popList[popList.length - 1];
-            if (vp.config.vacancy) {
+            if (vp?.config.vacancy) {
                 this.remove(vp.config.prefab, true);
             }
-            // for (let index = popList.length -1; index >= 0; index--) {
-            //     const vp = popList[index];
-            //     // 关闭已显示的界面
-            //     if (vp.valid && vp.config.vacancy) {
-            //         this.remove(vp.config.prefab, true);
-            //         break;
-            //     }
-            //     if (vp.config.mask) {
-            //         break;
-            //     }
-            // }
         }
+    }
+
+    private getActiveUINodes() {
+        let popList: ViewParams[] = [];
+        for (const value of this.ui_nodes.values()) {
+            if (value.state == UIState.LOADED) {
+                popList.push(value);
+            }
+        }
+        return popList;
+    }
+
+    refreshBlack() {
+        this.setBlackDisable();
     }
 
     clear(isDestroy: boolean) {

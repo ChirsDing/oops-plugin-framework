@@ -396,7 +396,7 @@ export class LayerManager {
             case LayerType.GM:
                 return this.gm;
             default:
-                console.error(`未知的LayerType类型：${layer}`);
+                console.warn(`未知的LayerType类型：${layer}`);
                 return this.popup;
         }
     }

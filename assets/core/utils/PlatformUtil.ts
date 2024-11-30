@@ -3,24 +3,20 @@
  * @LastEditors: dgflash
  * @LastEditTime: 2022-09-02 14:39:03
  */
-import { native, sys } from "cc";
+import { sys } from "cc";
 
 /** 平台数据 */
 export class PlatformUtil {
     /** 是否为安卓系统 */
     static isNativeAndroid() {
-        if (typeof native == "undefined")
-            return false
-        if (sys.isNative && sys.platform === sys.Platform.ANDROID)
+        if (sys.os === sys.OS.ANDROID)
             return true
         return false
     }
 
     /** 是否为苹果系统 */
     static isNativeIOS() {
-        if (typeof native == "undefined")
-            return false
-        if (sys.isNative && sys.os === sys.OS.IOS)
+        if (sys.os === sys.OS.IOS)
             return true
         return false
     }

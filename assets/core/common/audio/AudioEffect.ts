@@ -13,7 +13,7 @@ const { ccclass, menu } = _decorator;
 /** 游戏音效 */
 @ccclass("AudioEffect")
 export class AudioEffect extends Component {
-    private _maxEffectPoolCount: number = 10;
+    private _maxEffectPoolCount: number = 5;
 
     private _effectsPlaying: AudioEffectSource[] = []; // 正在播放的音效
     private _effectsPool: AudioEffectSource[] = []; // 音效池
@@ -202,6 +202,7 @@ export class AudioEffect extends Component {
         if (comp.polyphonyType <= 0) return;
         let count = this._mapPolyphonyCount.get(comp.polyphonyType) || 0;
         count--;
+        count = Math.max(count, 0);
         this._mapPolyphonyCount.set(comp.polyphonyType, count);
     }
 

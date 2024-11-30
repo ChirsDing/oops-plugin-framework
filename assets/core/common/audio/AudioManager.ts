@@ -20,7 +20,7 @@ export class AudioManager extends Component {
 
     showLog: boolean = false;
     
-    private _maxConcurrent: number = 7;
+    private _maxConcurrent: number = 5;
     private _volumeAvoid: number = 0.3;
     private _volume_music: number = 1;
     private _volume_effect: number = 1;

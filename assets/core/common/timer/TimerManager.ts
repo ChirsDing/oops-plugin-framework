@@ -161,13 +161,11 @@ export class TimerManager extends Component {
             let interval = Math.floor((this.getTime() - (this.times[key].startTime || this.getTime())) / 1000);
             let data = this.times[key];
             data.object[data.field] = data.object[data.field] - interval;
-            if (data.object[data.field] <= 0) {
+            if (data.object[data.field] < 0) {
                 data.object[data.field] = 0;
                 this.onTimerComplete(data);
             }
-            else {
-                this.times[key].startTime = null;
-            }
+            this.times[key].startTime = null;
         }
     }
 } 
